@@ -11,8 +11,6 @@ namespace MultiRepoTool
     {
         static void Main(string[] args)
         {
-            Project
-
             Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(WithParsed)
                 .WithNotParsed(WithNotParsed);
