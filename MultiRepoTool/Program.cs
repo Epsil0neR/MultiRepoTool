@@ -133,64 +133,6 @@ namespace MultiRepoTool
 				}
 			}
 
-			foreach (var repo in repositories.Take(0))
-			{
-				var executor = new CommandExecutor(repo.Directory);
-				var output = executor.Execute("Branches", "git branch -a");
-				var allBranches = output.Split('\n');
-
-				Write(repo.Name, ConsoleColor.Yellow);
-				(int _, var top) = Console.GetCursorPosition();
-				Console.SetCursorPosition(longestName, top);
-				Console.WriteLine(repo.Directory.FullName);
-				if (!string.IsNullOrEmpty(options.SearchBranch))
-				{
-					foreach (string branch in allBranches)
-					{
-						bool matchesSearch = branch.Contains(options.SearchBranch, StringComparison.InvariantCultureIgnoreCase);
-						bool isActive = branch.StartsWith('*');
-
-						if (matchesSearch)
-							(isActive ? onSearchBranch : hasSearchBranch).Add($"{repo.Name.PadRight(longestName)} - {branch}");
-
-						if (isActive)
-							WriteLine($"* {branch.Trim('*').Trim()}", ConsoleColor.Red);
-						else if (matchesSearch)
-							Console.WriteLine($"  {branch.Trim()}");
-					}
-				}
-				else
-				{
-					foreach (string branch in allBranches)
-					{
-						if (branch.StartsWith('*'))
-							WriteLine($"* {branch.Trim('*').Trim()}", ConsoleColor.Red);
-						else
-							Console.WriteLine($"  {branch.Trim()}");
-					}
-				}
-
-				var changes = executor.Execute("Changes", "git status -sb");
-				WriteLine(changes, ConsoleColor.Cyan);
-
-				Console.WriteLine();
-			}
-
-			//TODO: Remove this old code and all related.
-			//if (!string.IsNullOrEmpty(options.SearchBranch))
-			//{
-			//	Console.WriteLine();
-			//	Write($"Search results: ");
-			//	WriteLine(options.SearchBranch, ConsoleColor.Red);
-			//	WriteLine($"  On that branch already: {onSearchBranch.Count}");
-			//	foreach (var item in onSearchBranch)
-			//		WriteLine($"    {item}", ConsoleColor.Green);
-
-			//	hasSearchBranch = hasSearchBranch.Except(onSearchBranch).ToList();
-			//	WriteLine($"  Has that branch: {hasSearchBranch.Count}");
-			//	foreach (var item in hasSearchBranch)
-			//		WriteLine($"    {item}", ConsoleColor.Cyan);
-			//}
 
 			Console.WriteLine();
 			Console.Write("Press any key to exit...");
