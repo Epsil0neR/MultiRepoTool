@@ -53,8 +53,7 @@ namespace MultiRepoTool
 			var directories = di.GetDirectories();
 			var repositories = directories
 				.Select(x => GitRepository.FromDirectory(x))
-				.Where(x => x != null)
-				.ToList();
+				.Where(x => x != null);
 
 			var longestName = directories.Max(x => x.Name.Length) + 4;
 
