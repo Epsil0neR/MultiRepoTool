@@ -32,7 +32,7 @@ namespace MultiRepoTool.Git
 			IReadOnlyList<string> Parse(string output) =>
 				output
 					.Split("\n")
-					.Select(x => x.Trim())
+					.Select(x => x.Trim(' ', '\r'))
 					.Where(x => !string.IsNullOrEmpty(x))
 					.ToList();
 

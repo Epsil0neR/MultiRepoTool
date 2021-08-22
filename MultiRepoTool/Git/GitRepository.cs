@@ -12,7 +12,6 @@ namespace MultiRepoTool.Git
 		public const string CommandPull = "git pull";
 		public const string CommandFetch = "git fetch";
 		public const string CommandPush = "git push";
-		public const string CommandListBranchesAll = "git branch -a";
 		public const string CommandListBranchesLocal = "git branch -l";
 		public const string CommandListBranchesRemote = "git branch -r";
 		public const string CommandCurrentBranch = "git branch --show-current";
@@ -90,17 +89,18 @@ namespace MultiRepoTool.Git
 				return rv;
 			}
 
-			var currentBranch = Executor.Execute("Current branch", GitConst.CommandCurrentBranch);
+			var currentBranch = Executor.Execute("Current branch", GitConst.CommandCurrentBranch)
+				.Trim('\r','\n', ' ');
 			var localBranchesOutput = Executor.Execute("Local branches", GitConst.CommandListBranchesLocal);
 			var remoteBranchesOutput = Executor.Execute("Remote branches", GitConst.CommandListBranchesRemote);
 			List<string> ParseOutput(string output) =>
 				output
 					.Split("\n")
-					.Select(x => x.Trim().TrimStart('*').TrimStart())
+					.Select(x => x.Trim(' ', '*'))
 					.Where(x => !string.IsNullOrEmpty(x))
 					.ToList();
 
-			var locals = ParseOutput(localBranchesOutput);
+			ParseOutput(localBranchesOutput);
 			var remotes = ParseOutput(remoteBranchesOutput);
 
 			//TODO: For now it works only with 1 remote. What will happen when repo will have multiple remotes?
@@ -108,17 +108,16 @@ namespace MultiRepoTool.Git
 			var rv = new List<GitBranch>();
 
 			var localsDataOutput = Executor.Execute("Locals to remotes with track",
-				"git for-each-ref --format=\"%(refname:short),%(upstream:short),%(push:track)\" refs/heads");
-			// git for-each-ref --format="%(refname:short) %(upstream:short) %(push:track)" refs/heads
+				"git for-each-ref --format=\"%(refname:short);%(upstream:short);%(push:track)\" refs/heads");
+			// Command above, but without string escaping:
+			// git for-each-ref --format="%(refname:short);%(upstream:short);%(push:track)" refs/heads
 			var localsData = ParseOutput(localsDataOutput);
 			foreach (var localData in localsData)
 			{
-				var data = localData.Split(',');
+				var data = localData.Split(';');
 				var local = data[0];
 				var remote = data[1];
-				var track = data[2]; //TODO: Use this in future.
-				if (data.Length > 3)
-					Debugger.Break();
+				var track = data[2];
 
 				var branch = new GitBranch(this)
 				{
@@ -130,6 +129,7 @@ namespace MultiRepoTool.Git
 
 				if (currentBranch == local)
 					active = branch;
+
 				rv.Add(branch);
 			}
 
@@ -157,7 +157,7 @@ namespace MultiRepoTool.Git
 			var remoteNamesOutput = Executor.Execute("List remotes names", GitConst.CommandListRemoteNames);
 			var remoteNames = remoteNamesOutput
 				.Split("\n")
-				.Select(x => x.Trim())
+				.Select(x => x.Trim(' ', '\r'))
 				.Where(x => !string.IsNullOrEmpty(x));
 			foreach (var name in remoteNames)
 			{
@@ -171,21 +171,6 @@ namespace MultiRepoTool.Git
 		{
 			Executor.Execute("Fetch repository", GitConst.CommandFetch);
 			//TODO: Update all branches info.
-		}
-	}
-
-	public class GitBranch
-	{
-		public GitRepository Repository { get; }
-		public string Local { get; init; }
-		public string Remote { get; init; }
-
-		public uint Behind { get; set; }
-		public uint Ahead { get; set; }
-
-		public GitBranch(GitRepository repository)
-		{
-			Repository = repository;
 		}
 	}
 }
