@@ -35,7 +35,6 @@ namespace MultiRepoTool
 		private static void WithParsed(Options options)
 		{
 			options.Path = @"C:\Projects\_git\tradezero1";
-			//options.SearchBranch = "dev";
 
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
@@ -51,15 +50,13 @@ namespace MultiRepoTool
 			Write(di.FullName, ConsoleColor.Cyan);
 			WriteLine();
 
-			var repositories = di.GetDirectories()
-				//.TakeLast(1)
+			var directories = di.GetDirectories();
+			var repositories = directories
 				.Select(x => GitRepository.FromDirectory(x))
 				.Where(x => x != null)
 				.ToList();
 
-			var longestName = repositories.Max(x => x.Name.Length) + 4;
-			var hasSearchBranch = new List<string>();
-			var onSearchBranch = new List<string>();
+			var longestName = directories.Max(x => x.Name.Length) + 4;
 
 			//TODO: Find a way to fetch GIT without entering credentials manually or embedding them into repository directory.
 			//foreach (var repo in repositories)
