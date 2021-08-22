@@ -34,7 +34,8 @@ namespace MultiRepoTool
 
 		private static void WithParsed(Options options)
 		{
-			options.Path = @"C:\Projects\_git\tradezero1";
+			//options.Path = @"C:\Projects\_git\tradezero1";
+			//options.SearchBranch = "dev";
 
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
@@ -75,11 +76,15 @@ namespace MultiRepoTool
 				return sb.ToString();
 			}
 
+			var colorBranchLocal = ConsoleColor.Green;
+			var colorRepository = ConsoleColor.Yellow;
+			var colorBranchRemote = ConsoleColor.Red;
+
 			if (!string.IsNullOrWhiteSpace(options.SearchBranch))
 			{
 				var result = repositories.Search(options.SearchBranch, false);
 				Write("Search results for: ");
-				WriteLine(options.SearchBranch, ConsoleColor.Green);
+				WriteLine(options.SearchBranch, colorBranchLocal);
 
 				var onCorrect = result
 					.Where(x => x.Value.Contains(x.Key.ActiveBranch))
@@ -92,20 +97,21 @@ namespace MultiRepoTool
 				WriteLine($"  Already on that branch: {onCorrect.Count}");
 				foreach (var (repository, branches) in onCorrect)
 				{
-					Write($"    {repository.Name}", ConsoleColor.Yellow);
+					Write($"    {repository.Name}", colorRepository);
 					(int _, var top) = Console.GetCursorPosition();
 					Console.SetCursorPosition(longestName + 4, top);
-					Write(repository.ActiveBranch.Local, ConsoleColor.Green);
-					WriteLine($" {string.Join("  ", branches.Where(x => !ReferenceEquals(x, repository.ActiveBranch)).Select(ToResultString))}", ConsoleColor.Red);
+					Write(repository.ActiveBranch.Local, colorBranchLocal);
+					WriteLine($" {string.Join("  ", branches.Where(x => !ReferenceEquals(x, repository.ActiveBranch)).Select(ToResultString))}", colorBranchRemote);
 				}
 
+				WriteLine();
 				WriteLine($"  Has that branch: {toChange.Count}");
 				foreach (var (repository, branches) in toChange)
 				{
-					Write($"    {repository.Name}", ConsoleColor.Yellow);
+					Write($"    {repository.Name}", colorRepository);
 					(int _, var top) = Console.GetCursorPosition();
 					Console.SetCursorPosition(longestName + 4, top);
-					WriteLine($"{string.Join("  ", branches.Select(ToResultString))}", ConsoleColor.Red);
+					WriteLine($"{string.Join("  ", branches.Select(ToResultString))}", colorBranchRemote);
 				}
 				WriteLine();
 			}
@@ -116,12 +122,12 @@ namespace MultiRepoTool
 				foreach (var repository in repositories)
 				{
 					var branch = repository.ActiveBranch;
-					Write(repository.Name, ConsoleColor.Yellow);
+					Write(repository.Name, colorRepository);
 					(int _, var top) = Console.GetCursorPosition();
 					Console.SetCursorPosition(longestName + 4, top);
-					Write($" {ToResultString(branch)}", ConsoleColor.Green);
+					Write($" {ToResultString(branch)}", colorBranchLocal);
 					Write("...");
-					Write(branch.Remote, ConsoleColor.Red);
+					Write(branch.Remote, colorBranchRemote);
 					WriteLine();
 					if (!string.IsNullOrWhiteSpace(branch.Status))
 						WriteLine(branch.Status);

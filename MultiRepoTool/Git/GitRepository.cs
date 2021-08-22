@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using MultiRepoTool.Extensions;
@@ -63,7 +62,7 @@ namespace MultiRepoTool.Git
 			Name = string.IsNullOrWhiteSpace(name) ? Directory.Name : name;
 			Remotes = GetRemotes().ToList();
 			_branches.ReplaceAll(GetBranches());
-			ActiveBranch = Branches.FirstOrDefault(x=>x.IsActive);
+			ActiveBranch = Branches.FirstOrDefault(x => x.IsActive);
 		}
 
 		public IReadOnlyList<GitBranch> Branches => _branches;
@@ -97,7 +96,7 @@ namespace MultiRepoTool.Git
 			}
 
 			var currentBranch = Executor.Execute("Current branch", GitConst.CommandCurrentBranch)
-				.Trim('\r','\n', ' ');
+				.Trim('\r', '\n', ' ');
 			var localBranchesOutput = Executor.Execute("Local branches", GitConst.CommandListBranchesLocal);
 			var remoteBranchesOutput = Executor.Execute("Remote branches", GitConst.CommandListBranchesRemote);
 			List<string> ParseOutput(string output) =>
