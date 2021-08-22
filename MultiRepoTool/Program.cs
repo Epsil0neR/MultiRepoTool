@@ -1,163 +1,228 @@
 ﻿using CommandLine;
+using MultiRepoTool.Extensions;
+using MultiRepoTool.Git;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace MultiRepoTool
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Parser.Default.ParseArguments<Options>(args)
-                .WithParsed(WithParsed)
-                .WithNotParsed(WithNotParsed);
-        }
+	class Program
+	{
+		static void Main(string[] args)
+		{
+			ConfigureIoC();
 
-        private static void WithNotParsed(IEnumerable<Error> enumerable)
-        {
-            Console.WriteLine("Error parsing arguments.");
-            Console.Write("Press any key to exit...");
-            Console.ReadKey(false);
-        }
+			Parser.Default.ParseArguments<Options>(args)
+				.WithParsed(WithParsed)
+				.WithNotParsed(WithNotParsed);
+		}
 
-        private static void WithParsed(Options options)
-        {
-            if (string.IsNullOrEmpty(options.Path))
-                options.Path = Environment.CurrentDirectory;
-            var di = new DirectoryInfo(options.Path);
-            if (!di.Exists)
-            {
-                Console.WriteLine("Path to directory with all repositories not found.");
-                Console.Write("Press any key to exit...");
-                Console.ReadKey(false);
-            }
+		private static void ConfigureIoC()
+		{
 
-            var repositories = di.GetDirectories()
-                .Where(x => x.GetDirectories().Any(y => y.Name == ".git"))
-                .ToList();
-            var longestName = repositories.Max(x => x.Name.Length) + 4;
+		}
 
-            var hasSearchBranch = new List<string>();
-            var onSearchBranch = new List<string>();
+		private static void WithNotParsed(IEnumerable<Error> enumerable)
+		{
+			Console.WriteLine("Error parsing arguments.");
+			Console.Write("Press any key to exit...");
+			Console.ReadKey(false);
+		}
 
-            foreach (var repo in repositories)
-            {
-                var output = ExecuteCommand("Branches", "git branch -a", repo.FullName);
-                var allBranches = output.Split('\n');
+		private static void WithParsed(Options options)
+		{
+			options.Path = @"C:\Projects\_git\tradezero1";
+			//options.SearchBranch = "dev";
 
-                Write(repo.Name, ConsoleColor.Yellow);
-                (int _, var top) = Console.GetCursorPosition();
-                Console.SetCursorPosition(longestName, top);
-                Console.WriteLine(repo.FullName);
-                if (!string.IsNullOrEmpty(options.SearchBranch))
-                {
-                    foreach (string branch in allBranches)
-                    {
-                        bool matchesSearch = branch.Contains(options.SearchBranch, StringComparison.InvariantCultureIgnoreCase);
-                        bool isActive = branch.StartsWith('*');
+			if (string.IsNullOrEmpty(options.Path))
+				options.Path = Environment.CurrentDirectory;
+			var di = new DirectoryInfo(options.Path);
+			if (!di.Exists)
+			{
+				Console.WriteLine("Path to directory with all repositories not found.");
+				Console.Write("Press any key to exit...");
+				Console.ReadKey(false);
+			}
 
-                        if (matchesSearch) 
-                            (isActive ? onSearchBranch : hasSearchBranch).Add($"{repo.Name.PadRight(longestName)} - {branch}");
+			Write("Directory with repositories: ");
+			Write(di.FullName, ConsoleColor.Cyan);
+			WriteLine();
 
-                        if (isActive)
-                            WriteLine($"* {branch.Trim('*').Trim()}", ConsoleColor.Red);
-                        else if (matchesSearch)
-                                Console.WriteLine($"  {branch.Trim()}");
-                    }
-                }
-                else
-                {
-                    foreach (string branch in allBranches)
-                    {
-                        if (branch.StartsWith('*'))
-                            WriteLine($"* {branch.Trim('*').Trim()}", ConsoleColor.Red);
-                        else
-                            Console.WriteLine($"  {branch.Trim()}");
-                    }
-                }
+			var repositories = di.GetDirectories()
+				//.TakeLast(1)
+				.Select(x => GitRepository.FromDirectory(x))
+				.Where(x => x != null)
+				.ToList();
 
-                var changes = ExecuteCommand("Changes", "git status -sb", repo.FullName);
-                WriteLine(changes, ConsoleColor.Cyan);
+			var longestName = repositories.Max(x => x.Name.Length) + 4;
+			var hasSearchBranch = new List<string>();
+			var onSearchBranch = new List<string>();
 
-                Console.WriteLine();
-            }
+			//TODO: Find a way to fetch GIT without entering credentials manually or embedding them into repository directory.
+			//foreach (var repo in repositories)
+			//	repo.Fetch();
 
-            if (!string.IsNullOrEmpty(options.SearchBranch))
-            {
-                Console.WriteLine();
-                Write($"Search results: ");
-                WriteLine(options.SearchBranch, ConsoleColor.Red);
-                WriteLine($"  On that branch already: {onSearchBranch.Count}");
-                foreach (var item in onSearchBranch) 
-                    WriteLine($"    {item}", ConsoleColor.Green);
+			string ToResultString(GitBranch branch)
+			{
+				var name = branch.HasLocal() ? branch.Local : branch.Remote;
+				if (branch.Behind == 0 && branch.Ahead == 0)
+					return name;
+				var sb = new StringBuilder();
+				sb.Append(name);
+				if (branch.Ahead > 0)
+					sb.Append($"[A:{branch.Ahead}]");
+				if (branch.Behind > 0)
+					sb.Append($"[B:{branch.Behind}]");
+				return sb.ToString();
+			}
 
-                hasSearchBranch = hasSearchBranch.Except(onSearchBranch).ToList();
-                WriteLine($"  Has that branch: {hasSearchBranch.Count}"); 
-                foreach (var item in hasSearchBranch) 
-                    WriteLine($"    {item}", ConsoleColor.Cyan);
-            }
+			if (!string.IsNullOrWhiteSpace(options.SearchBranch))
+			{
+				var result = repositories.Search(options.SearchBranch, false);
+				Write("Search results for: ");
+				WriteLine(options.SearchBranch, ConsoleColor.Green);
 
-            Console.WriteLine();
-            Console.Write("Press any key to exit...");
-            Console.ReadKey(false);
-        }
+				var onCorrect = result
+					.Where(x => x.Value.Contains(x.Key.ActiveBranch))
+					.ToList();
+				var toChange = result
+					.Except(onCorrect)
+					.Where(x => x.Value.Any())
+					.ToList();
 
-        private static string ExecuteCommand(string commandName, string command, string workingDirectory)
-        {
-            var arguments = $@"/C {command}";
-            var dir = workingDirectory;
-            Process proc = new Process // https://stackoverflow.com/a/22869734/1763586
-            {
-                StartInfo =
-                {
-                    FileName = @"C:\Windows\System32\cmd.exe",
-                    Arguments = arguments,
-                    WorkingDirectory = dir,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    WindowStyle = ProcessWindowStyle.Hidden,
-                }
-            };
+				WriteLine($"  Already on that branch: {onCorrect.Count}");
+				foreach (var (repository, branches) in onCorrect)
+				{
+					Write($"    {repository.Name}", ConsoleColor.Yellow);
+					(int _, var top) = Console.GetCursorPosition();
+					Console.SetCursorPosition(longestName + 4, top);
+					Write(repository.ActiveBranch.Local, ConsoleColor.Green);
+					WriteLine($" {string.Join("  ", branches.Where(x => !ReferenceEquals(x, repository.ActiveBranch)).Select(ToResultString))}", ConsoleColor.Red);
+				}
 
-            proc.Start();
-            var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit();
+				WriteLine($"  Has that branch: {toChange.Count}");
+				foreach (var (repository, branches) in toChange)
+				{
+					Write($"    {repository.Name}", ConsoleColor.Yellow);
+					(int _, var top) = Console.GetCursorPosition();
+					Console.SetCursorPosition(longestName + 4, top);
+					WriteLine($"{string.Join("  ", branches.Select(ToResultString))}", ConsoleColor.Red);
+				}
+				WriteLine();
+			}
+			else
+			{
+				WriteLine("List all repositories with status:");
 
-            return output;
-        }
+				foreach (var repository in repositories)
+				{
+					var branch = repository.ActiveBranch;
+					Write(repository.Name, ConsoleColor.Yellow);
+					(int _, var top) = Console.GetCursorPosition();
+					Console.SetCursorPosition(longestName + 4, top);
+					Write($" {ToResultString(branch)}", ConsoleColor.Green);
+					Write("...");
+					Write(branch.Remote, ConsoleColor.Red);
+					WriteLine();
+					if (!string.IsNullOrWhiteSpace(branch.Status))
+						WriteLine(branch.Status);
+					WriteLine();
+				}
+			}
 
-        private static void Write(string text, ConsoleColor? color = null)
-        {
-            var current = Console.ForegroundColor;
-            if (color.HasValue)
-            {
-                Console.ForegroundColor = color.Value;
-            }
-            Console.Write(text);
-            Console.ForegroundColor = current;
-        }
+			foreach (var repo in repositories.Take(0))
+			{
+				var executor = new CommandExecutor(repo.Directory);
+				var output = executor.Execute("Branches", "git branch -a");
+				var allBranches = output.Split('\n');
 
-        private static void WriteLine(string text, ConsoleColor? color = null)
-        {
-            var current = Console.ForegroundColor;
-            if (color.HasValue)
-            {
-                Console.ForegroundColor = color.Value;
-            }
-            Console.WriteLine(text);
-            Console.ForegroundColor = current;
-        }
-    }
+				Write(repo.Name, ConsoleColor.Yellow);
+				(int _, var top) = Console.GetCursorPosition();
+				Console.SetCursorPosition(longestName, top);
+				Console.WriteLine(repo.Directory.FullName);
+				if (!string.IsNullOrEmpty(options.SearchBranch))
+				{
+					foreach (string branch in allBranches)
+					{
+						bool matchesSearch = branch.Contains(options.SearchBranch, StringComparison.InvariantCultureIgnoreCase);
+						bool isActive = branch.StartsWith('*');
 
-    public class Options
-    {
-        [Option('p', "path", HelpText = "Path to directory with all repositories.")]
-        public string Path { get; set; }
+						if (matchesSearch)
+							(isActive ? onSearchBranch : hasSearchBranch).Add($"{repo.Name.PadRight(longestName)} - {branch}");
 
-        [Option('b', "branch", HelpText = "Branch to search.")]
-        public string SearchBranch { get; set; }
-    }
+						if (isActive)
+							WriteLine($"* {branch.Trim('*').Trim()}", ConsoleColor.Red);
+						else if (matchesSearch)
+							Console.WriteLine($"  {branch.Trim()}");
+					}
+				}
+				else
+				{
+					foreach (string branch in allBranches)
+					{
+						if (branch.StartsWith('*'))
+							WriteLine($"* {branch.Trim('*').Trim()}", ConsoleColor.Red);
+						else
+							Console.WriteLine($"  {branch.Trim()}");
+					}
+				}
+
+				var changes = executor.Execute("Changes", "git status -sb");
+				WriteLine(changes, ConsoleColor.Cyan);
+
+				Console.WriteLine();
+			}
+
+			//TODO: Remove this old code and all related.
+			//if (!string.IsNullOrEmpty(options.SearchBranch))
+			//{
+			//	Console.WriteLine();
+			//	Write($"Search results: ");
+			//	WriteLine(options.SearchBranch, ConsoleColor.Red);
+			//	WriteLine($"  On that branch already: {onSearchBranch.Count}");
+			//	foreach (var item in onSearchBranch)
+			//		WriteLine($"    {item}", ConsoleColor.Green);
+
+			//	hasSearchBranch = hasSearchBranch.Except(onSearchBranch).ToList();
+			//	WriteLine($"  Has that branch: {hasSearchBranch.Count}");
+			//	foreach (var item in hasSearchBranch)
+			//		WriteLine($"    {item}", ConsoleColor.Cyan);
+			//}
+
+			Console.WriteLine();
+			Console.Write("Press any key to exit...");
+			Console.ReadKey(false);
+		}
+
+		private static void Write(string text, ConsoleColor? color = null)
+		{
+			var current = Console.ForegroundColor;
+			if (color.HasValue)
+			{
+				Console.ForegroundColor = color.Value;
+			}
+			Console.Write(text);
+			Console.ForegroundColor = current;
+		}
+
+		private static void WriteLine(string text = null, ConsoleColor? color = null)
+		{
+			if (text == null)
+			{
+				Console.WriteLine();
+				return;
+			}
+
+			var current = Console.ForegroundColor;
+			if (color.HasValue)
+			{
+				Console.ForegroundColor = color.Value;
+			}
+			Console.WriteLine(text);
+			Console.ForegroundColor = current;
+		}
+	}
 }

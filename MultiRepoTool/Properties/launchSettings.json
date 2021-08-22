@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "MultiRepoTool": {
+      "commandName": "Project",
+      "commandLineArgs": "--path \"C:\\Projects\\_git\\Epsil0neR\""
+    }
+  }
+}

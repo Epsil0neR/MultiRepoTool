@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using MultiRepoTool.Extensions;
 
 namespace MultiRepoTool.Git
 {
@@ -12,6 +13,7 @@ namespace MultiRepoTool.Git
 		public const string CommandPull = "git pull";
 		public const string CommandFetch = "git fetch";
 		public const string CommandPush = "git push";
+		public const string CommandBranchStatus = "git status -sb";
 		public const string CommandListBranchesLocal = "git branch -l";
 		public const string CommandListBranchesRemote = "git branch -r";
 		public const string CommandCurrentBranch = "git branch --show-current";
@@ -20,6 +22,8 @@ namespace MultiRepoTool.Git
 
 	public class GitRepository
 	{
+		private readonly List<GitBranch> _branches = new List<GitBranch>();
+
 		public CommandExecutor Executor { get; }
 
 		public string Name { get; }
@@ -58,14 +62,14 @@ namespace MultiRepoTool.Git
 
 			Name = string.IsNullOrWhiteSpace(name) ? Directory.Name : name;
 			Remotes = GetRemotes().ToList();
-			Branches = GetBranches(out var active);
-			ActiveBranch = active;
+			_branches.ReplaceAll(GetBranches());
+			ActiveBranch = Branches.FirstOrDefault(x=>x.IsActive);
 		}
 
-		public IReadOnlyList<GitBranch> Branches { get; set; } //TODO: Check setter access.
-		public GitBranch ActiveBranch { get; set; } //TODO: Check setter access.
+		public IReadOnlyList<GitBranch> Branches => _branches;
+		public GitBranch ActiveBranch { get; private set; } //TODO: Check setter access.
 
-		private IReadOnlyList<GitBranch> GetBranches(out GitBranch active)
+		private IEnumerable<GitBranch> GetBranches()
 		{
 			uint GetValueFromTrack(string track, string keyword)
 			{
@@ -74,6 +78,9 @@ namespace MultiRepoTool.Git
 
 				uint rv = 0;
 				var ind = track.IndexOf(keyword, StringComparison.InvariantCultureIgnoreCase);
+				if (ind < 0)
+					return 0;
+
 				var start = ind + keyword.Length;
 				var length = 1;
 				do
@@ -102,11 +109,6 @@ namespace MultiRepoTool.Git
 
 			ParseOutput(localBranchesOutput);
 			var remotes = ParseOutput(remoteBranchesOutput);
-
-			//TODO: For now it works only with 1 remote. What will happen when repo will have multiple remotes?
-			active = null;
-			var rv = new List<GitBranch>();
-
 			var localsDataOutput = Executor.Execute("Locals to remotes with track",
 				"git for-each-ref --format=\"%(refname:short);%(upstream:short);%(push:track)\" refs/heads");
 			// Command above, but without string escaping:
@@ -124,28 +126,34 @@ namespace MultiRepoTool.Git
 					Local = local,
 					Remote = remote,
 					Ahead = GetValueFromTrack(track, "ahead "),
-					Behind = GetValueFromTrack(track, "behind ")
+					Behind = GetValueFromTrack(track, "behind "),
+					IsActive = currentBranch == local
 				};
 
-				if (currentBranch == local)
-					active = branch;
+				if (branch.IsActive)
+				{
+					var status = Executor.Execute("Branch status", GitConst.CommandBranchStatus)
+						.TrimEnd(' ', '\r', '\n');
 
-				rv.Add(branch);
+					branch.Status = string.Join('\n',
+						status
+							.Split('\n')
+							.Skip(1));
+				}
+
+				remotes.Remove(remote);
+				yield return branch;
 			}
 
 			foreach (var remote in remotes)
 			{
-				if (rv.Any(x => x.Remote == remote))
-					continue;
-
 				var branch = new GitBranch(this)
 				{
 					Remote = remote
 				};
-				rv.Add(branch);
+				yield return branch;
 			}
 
-			return rv;
 		}
 
 		/// <summary>
@@ -170,7 +178,31 @@ namespace MultiRepoTool.Git
 		public void Fetch()
 		{
 			Executor.Execute("Fetch repository", GitConst.CommandFetch);
-			//TODO: Update all branches info.
+			foreach (var branch in GetBranches())
+			{
+				// 1. Find old branch that matches by Local or by Remote:
+				var oldLocal = _branches.FirstOrDefault(x => x.HasLocal() && x.Local == branch.Local);
+				var oldRemote = _branches.FirstOrDefault(x => x.HasRemote() && x.Remote == branch.Remote);
+
+				// 2. Remove old remote in case local and remote now are the same branch.
+				if (oldRemote != null && oldLocal != null && !ReferenceEquals(oldRemote, oldLocal))
+					_branches.Remove(oldRemote);
+
+				var old = oldLocal ?? oldRemote;
+				// 2. Update all in found branch:
+				if (old != null)
+				{
+					var ind = _branches.IndexOf(old);
+					_branches[ind] = branch;
+					//TODO: Dispose old (local and remote) branch.
+				}
+				else
+				{
+					_branches.Add(branch);
+				}
+			}
+
+			ActiveBranch = _branches.FirstOrDefault(x => x.IsActive);
 		}
 	}
 }
