@@ -57,7 +57,7 @@ namespace MultiRepoTool
 				.Select(x => GitRepository.FromDirectory(x))
 				.Where(x => x != null);
 
-			var longestName = directories.Max(x => x.Name.Length) + 4;
+			var longestName = directories.Max(x => x.Name.Length);
 
 			//TODO: Find a way to fetch GIT without entering credentials manually or embedding them into repository directory.
 			//foreach (var repo in repositories)
@@ -115,11 +115,17 @@ namespace MultiRepoTool
 			Console.ForegroundColor = current;
 		}
 
-		private static bool TrySearchBranch(IEnumerable<GitRepository> repositories,  Options options, int longestName)
+		private static void SetCursorLeft(int left)
 		{
-			if (string.IsNullOrWhiteSpace(options.SearchBranch)) 
+			(int _, var top) = Console.GetCursorPosition();
+			Console.SetCursorPosition(left, top);
+		}
+
+		private static bool TrySearchBranch(IEnumerable<GitRepository> repositories, Options options, int longestName)
+		{
+			if (string.IsNullOrWhiteSpace(options.SearchBranch))
 				return false;
-			
+
 			var result = repositories.Search(options.SearchBranch, false);
 			Write("Search results for: ");
 			WriteLine(options.SearchBranch, ColorBranchLocal);
@@ -136,8 +142,7 @@ namespace MultiRepoTool
 			foreach (var (repository, branches) in onCorrect)
 			{
 				Write($"    {repository.Name}", ColorRepository);
-				(int _, var top) = Console.GetCursorPosition();
-				Console.SetCursorPosition(longestName + 4, top);
+				SetCursorLeft(longestName + 8);
 				Write(repository.ActiveBranch.Local, ColorBranchLocal);
 				WriteLine($" {string.Join("  ", branches.Where(x => !ReferenceEquals(x, repository.ActiveBranch)).Select(GetNameWithTrackingInfo))}", ColorBranchRemote);
 			}
@@ -147,11 +152,23 @@ namespace MultiRepoTool
 			foreach (var (repository, branches) in toChange)
 			{
 				Write($"    {repository.Name}", ColorRepository);
-				(int _, var top) = Console.GetCursorPosition();
-				Console.SetCursorPosition(longestName + 4, top);
+				SetCursorLeft(longestName + 8);
 				WriteLine($"{string.Join("  ", branches.Select(GetNameWithTrackingInfo))}", ColorBranchRemote);
 			}
 			WriteLine();
+
+			var notFound = result.Where(x => !x.Value.Any()).ToList();
+			if (notFound.Any())
+			{
+				WriteLine($"  Nothing found: {notFound.Count}", ConsoleColor.Red);
+				foreach (var (repository, branches) in notFound)
+				{
+					Write($"    {repository.Name}", ColorRepository);
+					SetCursorLeft(longestName + 8);
+					Write(repository.ActiveBranch.Local, ColorBranchLocal);
+				}
+			}
+
 			return true;
 		}
 
@@ -163,8 +180,7 @@ namespace MultiRepoTool
 			{
 				var branch = repository.ActiveBranch;
 				Write(repository.Name, ColorRepository);
-				(int _, var top) = Console.GetCursorPosition();
-				Console.SetCursorPosition(longestName + 4, top);
+				SetCursorLeft(longestName + 8);
 				Write($" {GetNameWithTrackingInfo(branch)}", ColorBranchLocal);
 				Write("...");
 				Write(branch.Remote, ColorBranchRemote);
