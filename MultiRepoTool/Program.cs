@@ -11,6 +11,10 @@ namespace MultiRepoTool
 {
 	class Program
 	{
+		private const ConsoleColor ColorBranchLocal = ConsoleColor.Green;
+		private const ConsoleColor ColorRepository = ConsoleColor.Yellow;
+		private const ConsoleColor ColorBranchRemote = ConsoleColor.Red;
+
 		static void Main(string[] args)
 		{
 			ConfigureIoC();
@@ -34,9 +38,6 @@ namespace MultiRepoTool
 
 		private static void WithParsed(Options options)
 		{
-			//options.Path = @"C:\Projects\_git\tradezero1";
-			//options.SearchBranch = "dev";
-
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
 			var di = new DirectoryInfo(options.Path);
@@ -62,83 +63,28 @@ namespace MultiRepoTool
 			//foreach (var repo in repositories)
 			//	repo.Fetch();
 
-			string ToResultString(GitBranch branch)
+			var actions = new List<Func<bool>>()
 			{
-				var name = branch.HasLocal() ? branch.Local : branch.Remote;
-				if (branch.Behind == 0 && branch.Ahead == 0)
-					return name;
-				var sb = new StringBuilder();
-				sb.Append(name);
-				if (branch.Ahead > 0)
-					sb.Append($"[A:{branch.Ahead}]");
-				if (branch.Behind > 0)
-					sb.Append($"[B:{branch.Behind}]");
-				return sb.ToString();
-			}
+				() => TrySearchBranch(repositories, options, longestName),
+				() => ListAllChanges(repositories, options, longestName)
+			};
 
-			var colorBranchLocal = ConsoleColor.Green;
-			var colorRepository = ConsoleColor.Yellow;
-			var colorBranchRemote = ConsoleColor.Red;
-
-			if (!string.IsNullOrWhiteSpace(options.SearchBranch))
-			{
-				var result = repositories.Search(options.SearchBranch, false);
-				Write("Search results for: ");
-				WriteLine(options.SearchBranch, colorBranchLocal);
-
-				var onCorrect = result
-					.Where(x => x.Value.Contains(x.Key.ActiveBranch))
-					.ToList();
-				var toChange = result
-					.Except(onCorrect)
-					.Where(x => x.Value.Any())
-					.ToList();
-
-				WriteLine($"  Already on that branch: {onCorrect.Count}");
-				foreach (var (repository, branches) in onCorrect)
-				{
-					Write($"    {repository.Name}", colorRepository);
-					(int _, var top) = Console.GetCursorPosition();
-					Console.SetCursorPosition(longestName + 4, top);
-					Write(repository.ActiveBranch.Local, colorBranchLocal);
-					WriteLine($" {string.Join("  ", branches.Where(x => !ReferenceEquals(x, repository.ActiveBranch)).Select(ToResultString))}", colorBranchRemote);
-				}
-
-				WriteLine();
-				WriteLine($"  Has that branch: {toChange.Count}");
-				foreach (var (repository, branches) in toChange)
-				{
-					Write($"    {repository.Name}", colorRepository);
-					(int _, var top) = Console.GetCursorPosition();
-					Console.SetCursorPosition(longestName + 4, top);
-					WriteLine($"{string.Join("  ", branches.Select(ToResultString))}", colorBranchRemote);
-				}
-				WriteLine();
-			}
-			else
-			{
-				WriteLine("List all repositories with status:");
-
-				foreach (var repository in repositories)
-				{
-					var branch = repository.ActiveBranch;
-					Write(repository.Name, colorRepository);
-					(int _, var top) = Console.GetCursorPosition();
-					Console.SetCursorPosition(longestName + 4, top);
-					Write($" {ToResultString(branch)}", colorBranchLocal);
-					Write("...");
-					Write(branch.Remote, colorBranchRemote);
-					WriteLine();
-					if (!string.IsNullOrWhiteSpace(branch.Status))
-						WriteLine(branch.Status);
-					WriteLine();
-				}
-			}
-
+			var executed = actions.Any(x => x());
 
 			Console.WriteLine();
 			Console.Write("Press any key to exit...");
 			Console.ReadKey(false);
+		}
+
+		private static string GetNameWithTrackingInfo(GitBranch branch)
+		{
+			var name = branch.HasLocal() ? branch.Local : branch.Remote;
+			if (branch.Behind == 0 && branch.Ahead == 0) return name;
+			var sb = new StringBuilder();
+			sb.Append(name);
+			if (branch.Ahead > 0) sb.Append($"[A:{branch.Ahead}]");
+			if (branch.Behind > 0) sb.Append($"[B:{branch.Behind}]");
+			return sb.ToString();
 		}
 
 		private static void Write(string text, ConsoleColor? color = null)
@@ -167,6 +113,68 @@ namespace MultiRepoTool
 			}
 			Console.WriteLine(text);
 			Console.ForegroundColor = current;
+		}
+
+		private static bool TrySearchBranch(IEnumerable<GitRepository> repositories,  Options options, int longestName)
+		{
+			if (string.IsNullOrWhiteSpace(options.SearchBranch)) 
+				return false;
+			
+			var result = repositories.Search(options.SearchBranch, false);
+			Write("Search results for: ");
+			WriteLine(options.SearchBranch, ColorBranchLocal);
+
+			var onCorrect = result
+				.Where(x => x.Value.Contains(x.Key.ActiveBranch))
+				.ToList();
+			var toChange = result
+				.Except(onCorrect)
+				.Where(x => x.Value.Any())
+				.ToList();
+
+			WriteLine($"  Already on that branch: {onCorrect.Count}");
+			foreach (var (repository, branches) in onCorrect)
+			{
+				Write($"    {repository.Name}", ColorRepository);
+				(int _, var top) = Console.GetCursorPosition();
+				Console.SetCursorPosition(longestName + 4, top);
+				Write(repository.ActiveBranch.Local, ColorBranchLocal);
+				WriteLine($" {string.Join("  ", branches.Where(x => !ReferenceEquals(x, repository.ActiveBranch)).Select(GetNameWithTrackingInfo))}", ColorBranchRemote);
+			}
+
+			WriteLine();
+			WriteLine($"  Has that branch: {toChange.Count}");
+			foreach (var (repository, branches) in toChange)
+			{
+				Write($"    {repository.Name}", ColorRepository);
+				(int _, var top) = Console.GetCursorPosition();
+				Console.SetCursorPosition(longestName + 4, top);
+				WriteLine($"{string.Join("  ", branches.Select(GetNameWithTrackingInfo))}", ColorBranchRemote);
+			}
+			WriteLine();
+			return true;
+		}
+
+		private static bool ListAllChanges(IEnumerable<GitRepository> repositories, Options options, int longestName)
+		{
+			WriteLine("List all repositories with status:");
+
+			foreach (var repository in repositories)
+			{
+				var branch = repository.ActiveBranch;
+				Write(repository.Name, ColorRepository);
+				(int _, var top) = Console.GetCursorPosition();
+				Console.SetCursorPosition(longestName + 4, top);
+				Write($" {GetNameWithTrackingInfo(branch)}", ColorBranchLocal);
+				Write("...");
+				Write(branch.Remote, ColorBranchRemote);
+				WriteLine();
+				if (!string.IsNullOrWhiteSpace(branch.Status))
+					WriteLine(branch.Status);
+				WriteLine();
+			}
+
+			return true;
 		}
 	}
 }
