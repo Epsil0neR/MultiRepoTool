@@ -78,6 +78,9 @@ namespace MultiRepoTool
 
 		private static string GetNameWithTrackingInfo(GitBranch branch)
 		{
+			if (branch == null)
+				return string.Empty;
+
 			var name = branch.HasLocal() ? branch.Local : branch.Remote;
 			if (branch.Behind == 0 && branch.Ahead == 0) return name;
 			var sb = new StringBuilder();
@@ -143,7 +146,7 @@ namespace MultiRepoTool
 			{
 				Write($"    {repository.Name}", ColorRepository);
 				SetCursorLeft(longestName + 8);
-				Write(repository.ActiveBranch.Local, ColorBranchLocal);
+				Write(GetNameWithTrackingInfo(repository.ActiveBranch), ColorBranchLocal);
 				WriteLine($" {string.Join("  ", branches.Where(x => !ReferenceEquals(x, repository.ActiveBranch)).Select(GetNameWithTrackingInfo))}", ColorBranchRemote);
 			}
 
@@ -165,7 +168,11 @@ namespace MultiRepoTool
 				{
 					Write($"    {repository.Name}", ColorRepository);
 					SetCursorLeft(longestName + 8);
-					Write(repository.ActiveBranch.Local, ColorBranchLocal);
+
+					if (repository.ActiveBranch != null)
+						Write(repository.ActiveBranch.Local, ColorBranchLocal);
+					else
+						Write("HEAD detached", ConsoleColor.DarkRed);
 				}
 			}
 
@@ -179,6 +186,12 @@ namespace MultiRepoTool
 			foreach (var repository in repositories)
 			{
 				var branch = repository.ActiveBranch;
+				if (branch == null)
+				{
+					WriteLine("HEAD detached", ConsoleColor.DarkRed);
+					continue;
+				}
+
 				Write(repository.Name, ColorRepository);
 				SetCursorLeft(longestName + 8);
 				Write($" {GetNameWithTrackingInfo(branch)}", ColorBranchLocal);
