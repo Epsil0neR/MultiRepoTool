@@ -3,8 +3,10 @@ using MultiRepoTool.Extensions;
 using MultiRepoTool.Git;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,6 +14,9 @@ namespace MultiRepoTool
 {
 	class Program
 	{
+		[DllImport("user32.dll")]
+		public static extern bool SetForegroundWindow(IntPtr WindowHandle);
+
 		private const ConsoleColor ColorBranchLocal = ConsoleColor.Green;
 		private const ConsoleColor ColorRepository = ConsoleColor.Yellow;
 		private const ConsoleColor ColorBranchRemote = ConsoleColor.Red;
@@ -39,10 +44,6 @@ namespace MultiRepoTool
 
 		private static void WithParsed(Options options)
 		{
-			options.Path = @"C:\Projects\_git\tradezero1";
-			options.OpenInGitKraken = true;
-			options.OpenInGitKrakenDelay = -1;//10 * 1000;
-
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
 			var di = new DirectoryInfo(options.Path);
@@ -130,6 +131,12 @@ namespace MultiRepoTool
 			Console.SetCursorPosition(left, top);
 		}
 
+		private static void Focus()
+		{
+			var hWnd = Process.GetCurrentProcess().MainWindowHandle;
+			SetForegroundWindow(hWnd);
+		}
+
 		private static bool TrySearchBranch(IEnumerable<GitRepository> repositories, Options options, int longestName)
 		{
 			if (string.IsNullOrWhiteSpace(options.SearchBranch))
@@ -210,8 +217,12 @@ namespace MultiRepoTool
 			}
 
 			await Task.WhenAll(tasks);
+
 			WriteLine();
 			WriteLine($"Opened {tasks.Count} repositories in GitKraken.");
+
+			await Task.Delay(5000);
+			Focus();
 
 			return true;
 		}
