@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace MultiRepoTool
 {
@@ -38,6 +39,10 @@ namespace MultiRepoTool
 
 		private static void WithParsed(Options options)
 		{
+			options.Path = @"C:\Projects\_git\tradezero1";
+			options.OpenInGitKraken = true;
+			options.OpenInGitKrakenDelay = -1;//10 * 1000;
+
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
 			var di = new DirectoryInfo(options.Path);
@@ -66,6 +71,7 @@ namespace MultiRepoTool
 			var actions = new List<Func<bool>>()
 			{
 				() => TrySearchBranch(repositories, options, longestName),
+				() => TryOpenInGitKraken(repositories, options, longestName).GetAwaiter().GetResult(),
 				() => ListAllChanges(repositories, options, longestName)
 			};
 
@@ -171,6 +177,38 @@ namespace MultiRepoTool
 
 			return true;
 		}
+
+		private static async Task<bool> TryOpenInGitKraken(IEnumerable<GitRepository> repositories, Options options, int longestName)
+		{
+			if (!options.OpenInGitKraken)
+				return false;
+
+			WriteLine("Open all repositories in GitKraken:");
+
+			var tasks = new List<Task>();
+			foreach (var repository in repositories)
+			{
+				WriteLine($"  {repository.Name}", ColorRepository);
+				var task = repository.OpenInGitKraken();
+				tasks.Add(task);
+				switch (options.OpenInGitKrakenDelay)
+				{
+					case 0:
+						await task;
+						break;
+					case > 0:
+						task.Wait(options.OpenInGitKrakenDelay);
+						break;
+				}
+			}
+
+			await Task.WhenAll(tasks);
+			WriteLine();
+			WriteLine($"Opened {tasks.Count} repositories in GitKraken.");
+
+			return true;
+		}
+
 
 		private static bool ListAllChanges(IEnumerable<GitRepository> repositories, Options options, int longestName)
 		{

@@ -1,7 +1,9 @@
 ﻿using MultiRepoTool.Git;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace MultiRepoTool.Extensions
 {
@@ -26,6 +28,27 @@ namespace MultiRepoTool.Extensions
 		public static Dictionary<GitRepository, IEnumerable<GitBranch>> Search(this IEnumerable<GitRepository> repositories, string query, bool includeActive)
 		{
 			return repositories.ToDictionary(x => x, x => x.Search(query, includeActive));
+		}
+
+		public static Task OpenInGitKraken(this GitRepository repository)
+		{
+			var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+			var exePath = $"{localAppData}/gitkraken/update.exe";
+			var param = "--processStart=gitkraken.exe --process-start-args=\"-p \\\"{0}\\\"\"";
+
+			var process = new Process
+			{
+				StartInfo =
+				{
+					FileName = exePath,
+					Arguments = string.Format(param, repository.Directory.FullName),
+					UseShellExecute = false,
+					RedirectStandardOutput = true,
+					WindowStyle = ProcessWindowStyle.Hidden
+				}
+			};
+			process.Start();
+			return process.WaitForExitAsync();
 		}
 	}
 
