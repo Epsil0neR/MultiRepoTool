@@ -15,7 +15,7 @@ namespace MultiRepoTool
 	class Program
 	{
 		[DllImport("user32.dll")]
-		public static extern bool SetForegroundWindow(IntPtr WindowHandle);
+		public static extern bool SetForegroundWindow(IntPtr windowHandle);
 
 		private const ConsoleColor ColorBranchLocal = ConsoleColor.Green;
 		private const ConsoleColor ColorRepository = ConsoleColor.Yellow;
@@ -69,14 +69,14 @@ namespace MultiRepoTool
 			//foreach (var repo in repositories)
 			//	repo.Fetch();
 
-			var actions = new List<Func<bool>>()
+			var actions = new List<Func<bool>>
 			{
-				() => TrySearchBranch(repositories, options, longestName),
 				() => TryOpenInGitKraken(repositories, options, longestName).GetAwaiter().GetResult(),
-				() => ListAllChanges(repositories, options, longestName)
+				() => TrySearchBranch(repositories, options, longestName),
+				() => ListAllChanges(repositories, longestName)
 			};
 
-			var executed = actions.Any(x => x());
+			_ = actions.Any(x => x());
 
 			Console.WriteLine();
 			Console.Write("Press any key to exit...");
@@ -139,12 +139,12 @@ namespace MultiRepoTool
 
 		private static bool TrySearchBranch(IEnumerable<GitRepository> repositories, Options options, int longestName)
 		{
-			if (string.IsNullOrWhiteSpace(options.SearchBranch))
+			if (string.IsNullOrWhiteSpace(options.Search))
 				return false;
 
-			var result = repositories.Search(options.SearchBranch, false);
+			var result = repositories.Search(options.Search, false);
 			Write("Search results for: ");
-			WriteLine(options.SearchBranch, ColorBranchLocal);
+			WriteLine(options.Search, ColorBranchLocal);
 
 			var onCorrect = result
 				.Where(x => x.Value.Contains(x.Key.ActiveBranch))
@@ -177,7 +177,7 @@ namespace MultiRepoTool
 			if (notFound.Any())
 			{
 				WriteLine($"  Nothing found: {notFound.Count}", ConsoleColor.Red);
-				foreach (var (repository, branches) in notFound)
+				foreach (var (repository, _) in notFound)
 				{
 					Write($"    {repository.Name}", ColorRepository);
 					SetCursorLeft(longestName + 8);
@@ -198,10 +198,18 @@ namespace MultiRepoTool
 				return false;
 
 			WriteLine("Open all repositories in GitKraken:");
-
+			var filter = !string.IsNullOrWhiteSpace(options.Search);
 			var tasks = new List<Task>();
 			foreach (var repository in repositories)
 			{
+				if (filter && !repository.Name.Contains(options.Search, StringComparison.InvariantCultureIgnoreCase))
+				{
+					Write($"  {repository.Name}", ColorRepository);
+					SetCursorLeft(longestName + 2);
+					WriteLine(" - skipped.");
+					continue;
+				}
+
 				WriteLine($"  {repository.Name}", ColorRepository);
 				var task = repository.OpenInGitKraken();
 				tasks.Add(task);
@@ -228,7 +236,7 @@ namespace MultiRepoTool
 		}
 
 
-		private static bool ListAllChanges(IEnumerable<GitRepository> repositories, Options options, int longestName)
+		private static bool ListAllChanges(IEnumerable<GitRepository> repositories, int longestName)
 		{
 			WriteLine("List all repositories with status:");
 

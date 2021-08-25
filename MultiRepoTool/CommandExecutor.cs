@@ -20,19 +20,7 @@ namespace MultiRepoTool
 			var arguments = $@"/C {command}";
 			var dir = WorkingDirectory.FullName;
 
-			if (false)
-			{
-				var privateKeyPath = @"C:\Users\epsil\.ssh\id_rsa";
-				var argsBuilder = new StringBuilder();
-				argsBuilder.Append($"cd \"{dir}\" &&");
-				argsBuilder.Append($"SET GIT_SSH_COMMAND=ssh -o StrictHostKeyChecking=no -i \\\"{privateKeyPath}\\\" && ");
-				argsBuilder.Append(command);
-				argsBuilder.Append(" && exit");
-				cmdPath = @"C:\Program Files\Git\git-cmd.exe";
-				arguments = argsBuilder.ToString();
-			}
-
-			Process proc = new Process // https://stackoverflow.com/a/22869734/1763586
+			var proc = new Process // https://stackoverflow.com/a/22869734/1763586
 			{
 				StartInfo =
 				{

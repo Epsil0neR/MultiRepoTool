@@ -28,21 +28,20 @@ namespace MultiRepoTool.Git
 			var urlsPush = repository.Executor.Execute("List push urls", CommandPush(name));
 			var urlsFetch = repository.Executor.Execute("List fetch urls", CommandPush(name));
 
-			IReadOnlyList<string> Parse(string output) =>
-				output
-					.Split("\n")
-					.Select(x => x.Trim(' ', '\r'))
-					.Where(x => !string.IsNullOrEmpty(x))
-					.ToList();
-
 
 			var rv = new GitRemote(repository)
 			{
 				Name = name,
-				UrlsFetch = Parse(urlsFetch),
-				UrlsPush = Parse(urlsPush)
+				UrlsFetch = ParseUrlOutput(urlsFetch),
+				UrlsPush = ParseUrlOutput(urlsPush)
 			};
 			return rv;
 		}
+
+		private static IReadOnlyList<string> ParseUrlOutput(string output) =>
+			output.Split("\n")
+				.Select(x => x.Trim(' ', '\r'))
+				.Where(x => !string.IsNullOrEmpty(x))
+				.ToList();
 	}
 }

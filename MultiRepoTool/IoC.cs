@@ -8,7 +8,7 @@ namespace MultiRepoTool
 {
     public static class IoC
     {
-        private static IUnityContainer _container = _container ?? (_container = InitializeUnityContainer());
+        private static IUnityContainer _container = _container ??= InitializeUnityContainer();
 
         public static IUnityContainer Container => _container;
 

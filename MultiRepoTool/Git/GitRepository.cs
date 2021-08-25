@@ -21,7 +21,7 @@ namespace MultiRepoTool.Git
 
 	public class GitRepository
 	{
-		private readonly List<GitBranch> _branches = new List<GitBranch>();
+		private readonly List<GitBranch> _branches = new();
 
 		public CommandExecutor Executor { get; }
 

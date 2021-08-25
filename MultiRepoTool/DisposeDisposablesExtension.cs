@@ -16,12 +16,12 @@ namespace MultiRepoTool
     {
         private class DisposeDisposablesStrategy : BuilderStrategy, IDisposable
         {
-            private readonly List<WeakReference<IDisposable>> _disposableRefs = new List<WeakReference<IDisposable>>();
-            private readonly object _disposableRefsLock = new object();
+            private readonly List<WeakReference<IDisposable>> _disposableRefs = new();
+            private readonly object _disposableRefsLock = new();
 
             public override void PreBuildUp(ref BuilderContext context)
             {
-                if (!(context.Existing is IDisposable disposable))
+                if (context.Existing is not IDisposable disposable)
                     return;
 
                 lock (_disposableRefsLock)
@@ -67,7 +67,7 @@ namespace MultiRepoTool
             }
         }
 
-        private readonly DisposeDisposablesStrategy _disposeDisposablesStrategy = new DisposeDisposablesStrategy();
+        private readonly DisposeDisposablesStrategy _disposeDisposablesStrategy = new();
 
         protected override void Initialize()
         {
