@@ -26,7 +26,7 @@ namespace MultiRepoTool.Git
 				return null;
 
 			var urlsPush = repository.Executor.Execute("List push urls", CommandPush(name));
-			var urlsFetch = repository.Executor.Execute("List fetch urls", CommandPush(name));
+			var urlsFetch = repository.Executor.Execute("List fetch urls", CommandFetch(name));
 
 
 			var rv = new GitRemote(repository)

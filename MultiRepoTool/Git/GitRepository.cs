@@ -22,6 +22,7 @@ namespace MultiRepoTool.Git
 	public class GitRepository
 	{
 		private readonly List<GitBranch> _branches = new();
+		private GitBranch _activeBranch;
 
 		public CommandExecutor Executor { get; }
 
@@ -66,7 +67,24 @@ namespace MultiRepoTool.Git
 		}
 
 		public IReadOnlyList<GitBranch> Branches => _branches;
-		public GitBranch ActiveBranch { get; private set; } //TODO: Check setter access.
+
+		public GitBranch ActiveBranch
+		{
+			get => _activeBranch;
+			private set
+			{
+				if (ReferenceEquals(_activeBranch, value))
+					return;
+
+				if (_activeBranch != null)
+					_activeBranch.IsActive = false;
+				if (value != null)
+					value.IsActive = true;
+
+				_activeBranch = value;
+
+			}
+		}
 
 		private IEnumerable<GitBranch> GetBranches()
 		{
@@ -126,10 +144,9 @@ namespace MultiRepoTool.Git
 					Remote = remote,
 					Ahead = GetValueFromTrack(track, "ahead "),
 					Behind = GetValueFromTrack(track, "behind "),
-					IsActive = currentBranch == local
 				};
 
-				if (branch.IsActive)
+				if (currentBranch == local)
 				{
 					var status = Executor.Execute("Branch status", GitConst.CommandBranchStatus)
 						.TrimEnd(' ', '\r', '\n');
@@ -138,6 +155,8 @@ namespace MultiRepoTool.Git
 						status
 							.Split('\n')
 							.Skip(1));
+
+					ActiveBranch = branch;
 				}
 
 				remotes.Remove(remote);
@@ -177,6 +196,10 @@ namespace MultiRepoTool.Git
 		public void Fetch()
 		{
 			Executor.Execute("Fetch repository", GitConst.CommandFetch);
+		}
+
+		public void Reload()
+		{
 			foreach (var branch in GetBranches())
 			{
 				// 1. Find old branch that matches by Local or by Remote:
@@ -200,7 +223,6 @@ namespace MultiRepoTool.Git
 					_branches.Add(branch);
 				}
 			}
-
 			ActiveBranch = _branches.FirstOrDefault(x => x.IsActive);
 		}
 	}
