@@ -46,6 +46,7 @@ namespace MultiRepoTool
 		{
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
+
 			var di = new DirectoryInfo(options.Path);
 			if (!di.Exists)
 			{
@@ -65,9 +66,13 @@ namespace MultiRepoTool
 
 			var longestName = directories.Max(x => x.Name.Length);
 
-			//TODO: Find a way to fetch GIT without entering credentials manually or embedding them into repository directory.
-			//foreach (var repo in repositories)
-			//	repo.Fetch();
+			if (options.Fetch)
+				foreach (var repo in repositories)
+				{
+					Write($"{DateTime.Now:HH:mm:ss.fff} - Fetching ");
+					WriteLine(repo.Name, ColorRepository);
+					repo.Fetch();
+				}
 
 			var actions = new List<Func<bool>>
 			{
@@ -77,6 +82,9 @@ namespace MultiRepoTool
 			};
 
 			_ = actions.Any(x => x());
+
+			if (options.AutoExit)
+				return;
 
 			Console.WriteLine();
 			Console.Write("Press any key to exit...");

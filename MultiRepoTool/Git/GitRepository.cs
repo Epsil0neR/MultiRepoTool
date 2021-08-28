@@ -196,6 +196,7 @@ namespace MultiRepoTool.Git
 		public void Fetch()
 		{
 			Executor.Execute("Fetch repository", GitConst.CommandFetch);
+			Reload();
 		}
 
 		public void Reload()

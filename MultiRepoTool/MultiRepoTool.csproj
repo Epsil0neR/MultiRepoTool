@@ -3,6 +3,9 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,4 +13,16 @@
     <PackageReference Include="Unity" Version="5.11.10" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <ReleaseNotes>
+      v1.1.0:
+      - Added option to fetch repositories before other other operation.
+      - Added option to exit application after all operations executed without wait for user input.
+      - Option to open in GitKraken all or filtered (use --search to filter repository name) repositories.
+      - Option to open in GitKraken with delay. That can open faster (no guarantee of opened in GitKraken order of repositories) or slower to let GK also perform auto-fetch.
+      v1.0.0:
+      - Option to all repositories in specified path with status and current info of commits ahead / behind.
+      - Option to search for a specific branch locally and remotelly (that are currently known locally).
+    </ReleaseNotes>
+  </PropertyGroup>
 </Project>
