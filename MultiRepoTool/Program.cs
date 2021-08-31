@@ -42,10 +42,6 @@ namespace MultiRepoTool
 
 		private static void WithParsed(Options options)
 		{
-			//TODO: Get rid of this temp options:
-			options.Path = @"C:\Projects\_git\tradezero1";
-			options.Search = "proj";
-
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
 
