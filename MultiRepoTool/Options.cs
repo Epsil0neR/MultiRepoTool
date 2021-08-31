@@ -18,9 +18,5 @@ namespace MultiRepoTool
 
 		[Option('s', "search", HelpText = "Search for a branches with name.")]
 		public string Search { get; set; }
-
-
-		[Option("gk-delay", Required = false, HelpText = "Delay while opening repositories in GitKraken.")]
-		public int OpenInGitKrakenDelay { get; set; }
 	}
 }

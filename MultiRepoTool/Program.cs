@@ -1,26 +1,24 @@
 ﻿using CommandLine;
-using MultiRepoTool.Extensions;
+using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
+using MultiRepoTool.Utils;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 
 namespace MultiRepoTool
 {
+	public struct Constants
+	{
+		public const ConsoleColor ColorBranchLocal = ConsoleColor.Green;
+		public const ConsoleColor ColorRepository = ConsoleColor.Yellow;
+		public const ConsoleColor ColorBranchRemote = ConsoleColor.Red;
+	}
+
 	class Program
 	{
-		[DllImport("user32.dll")]
-		public static extern bool SetForegroundWindow(IntPtr windowHandle);
-
-		private const ConsoleColor ColorBranchLocal = ConsoleColor.Green;
-		private const ConsoleColor ColorRepository = ConsoleColor.Yellow;
-		private const ConsoleColor ColorBranchRemote = ConsoleColor.Red;
-
 		static void Main(string[] args)
 		{
 			ConfigureIoC();
@@ -44,6 +42,10 @@ namespace MultiRepoTool
 
 		private static void WithParsed(Options options)
 		{
+			//TODO: Get rid of this temp options:
+			options.Path = @"C:\Projects\_git\tradezero1";
+			options.Search = "proj";
+
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
 
@@ -55,33 +57,42 @@ namespace MultiRepoTool
 				Console.ReadKey(false);
 			}
 
-			Write("Directory with repositories: ");
-			Write(di.FullName, ConsoleColor.Cyan);
-			WriteLine();
+			SetTitle(di.FullName);
+
+			ConsoleUtils.Write("Directory with repositories: ");
+			ConsoleUtils.Write(di.FullName, ConsoleColor.Cyan);
+			ConsoleUtils.WriteLine();
 
 			var directories = di.GetDirectories();
 			var repositories = directories
 				.Select(x => GitRepository.FromDirectory(x))
 				.Where(x => x != null);
 
-			var longestName = directories.Max(x => x.Name.Length);
+			IoC.RegisterInstance(repositories);
 
-			if (options.Fetch)
-				foreach (var repo in repositories)
-				{
-					Write($"{DateTime.Now:HH:mm:ss.fff} - Fetching ");
-					WriteLine(repo.Name, ColorRepository);
-					repo.Fetch();
-				}
-
-			var actions = new List<Func<bool>>
+			var order = new List<Type>
 			{
-				() => TryOpenInGitKraken(repositories, options, longestName).GetAwaiter().GetResult(),
-				() => TrySearchBranch(repositories, options, longestName),
-				() => ListAllChanges(repositories, longestName)
+				typeof(MenuItems.Reload),
+				typeof(MenuItems.Fetch),
+				typeof(MenuItems.Search),
+				typeof(MenuItems.Status),
+				typeof(MenuItems.OpenInGitKraken),
+				typeof(MenuItems.EndActionsSeparator),
+				typeof(MenuItems.ClearConsole),
+				typeof(MenuItems.Exit),
+			};
+			var menuItems = IoC.ResolveAll<MenuItem>()
+				.OrderBy(x => order.IndexOf(x.GetType()))
+				.ToList();
+
+			var menu = new Menu(menuItems)
+			{
+				LoopNavigation = true,
 			};
 
-			_ = actions.Any(x => x());
+			RunFromOptions(menu, options);
+
+			menu.Run();
 
 			if (options.AutoExit)
 				return;
@@ -91,184 +102,23 @@ namespace MultiRepoTool
 			Console.ReadKey(false);
 		}
 
-		private static string GetNameWithTrackingInfo(GitBranch branch)
+		private static void RunFromOptions(Menu menu, Options options)
 		{
-			if (branch == null)
-				return string.Empty;
+			if (options.Fetch)
+				menu.Items.OfType<MenuItems.Fetch>().FirstOrDefault()?.Execute(menu);
 
-			var name = branch.HasLocal() ? branch.Local : branch.Remote;
-			if (branch.Behind == 0 && branch.Ahead == 0) return name;
-			var sb = new StringBuilder();
-			sb.Append(name);
-			if (branch.Ahead > 0) sb.Append($"[A:{branch.Ahead}]");
-			if (branch.Behind > 0) sb.Append($"[B:{branch.Behind}]");
-			return sb.ToString();
+			if (options.OpenInGitKraken)
+				menu.Items.OfType<MenuItems.OpenInGitKraken>().FirstOrDefault()?.Exec(options.Search, true);
+			else if (!string.IsNullOrWhiteSpace(options.Search))
+				menu.Items.OfType<MenuItems.Search>().FirstOrDefault()?.Exec(options.Search, true);
 		}
 
-		private static void Write(string text, ConsoleColor? color = null)
+		private static void SetTitle(string workPath)
 		{
-			var current = Console.ForegroundColor;
-			if (color.HasValue)
-			{
-				Console.ForegroundColor = color.Value;
-			}
-			Console.Write(text);
-			Console.ForegroundColor = current;
-		}
+			var asm = Assembly.GetExecutingAssembly();
+			var exe = Path.GetFileName(asm.Location);
 
-		private static void WriteLine(string text = null, ConsoleColor? color = null)
-		{
-			if (text == null)
-			{
-				Console.WriteLine();
-				return;
-			}
-
-			var current = Console.ForegroundColor;
-			if (color.HasValue)
-			{
-				Console.ForegroundColor = color.Value;
-			}
-			Console.WriteLine(text);
-			Console.ForegroundColor = current;
-		}
-
-		private static void SetCursorLeft(int left)
-		{
-			(int _, var top) = Console.GetCursorPosition();
-			Console.SetCursorPosition(left, top);
-		}
-
-		private static void Focus()
-		{
-			var hWnd = Process.GetCurrentProcess().MainWindowHandle;
-			SetForegroundWindow(hWnd);
-		}
-
-		private static bool TrySearchBranch(IEnumerable<GitRepository> repositories, Options options, int longestName)
-		{
-			if (string.IsNullOrWhiteSpace(options.Search))
-				return false;
-
-			var result = repositories.Search(options.Search, false);
-			Write("Search results for: ");
-			WriteLine(options.Search, ColorBranchLocal);
-
-			var onCorrect = result
-				.Where(x => x.Value.Contains(x.Key.ActiveBranch))
-				.ToList();
-			var toChange = result
-				.Except(onCorrect)
-				.Where(x => x.Value.Any())
-				.ToList();
-
-			WriteLine($"  Already on that branch: {onCorrect.Count}");
-			foreach (var (repository, branches) in onCorrect)
-			{
-				Write($"    {repository.Name}", ColorRepository);
-				SetCursorLeft(longestName + 8);
-				Write(GetNameWithTrackingInfo(repository.ActiveBranch), ColorBranchLocal);
-				WriteLine($" {string.Join("  ", branches.Where(x => !ReferenceEquals(x, repository.ActiveBranch)).Select(GetNameWithTrackingInfo))}", ColorBranchRemote);
-			}
-
-			WriteLine();
-			WriteLine($"  Has that branch: {toChange.Count}");
-			foreach (var (repository, branches) in toChange)
-			{
-				Write($"    {repository.Name}", ColorRepository);
-				SetCursorLeft(longestName + 8);
-				WriteLine($"{string.Join("  ", branches.Select(GetNameWithTrackingInfo))}", ColorBranchRemote);
-			}
-			WriteLine();
-
-			var notFound = result.Where(x => !x.Value.Any()).ToList();
-			if (notFound.Any())
-			{
-				WriteLine($"  Nothing found: {notFound.Count}", ConsoleColor.Red);
-				foreach (var (repository, _) in notFound)
-				{
-					Write($"    {repository.Name}", ColorRepository);
-					SetCursorLeft(longestName + 8);
-
-					if (repository.ActiveBranch != null)
-						Write(repository.ActiveBranch.Local, ColorBranchLocal);
-					else
-						Write("HEAD detached", ConsoleColor.DarkRed);
-				}
-			}
-
-			return true;
-		}
-
-		private static async Task<bool> TryOpenInGitKraken(IEnumerable<GitRepository> repositories, Options options, int longestName)
-		{
-			if (!options.OpenInGitKraken)
-				return false;
-
-			WriteLine("Open all repositories in GitKraken:");
-			var filter = !string.IsNullOrWhiteSpace(options.Search);
-			var tasks = new List<Task>();
-			foreach (var repository in repositories)
-			{
-				if (filter && !repository.Name.Contains(options.Search, StringComparison.InvariantCultureIgnoreCase))
-				{
-					Write($"  {repository.Name}", ColorRepository);
-					SetCursorLeft(longestName + 2);
-					WriteLine(" - skipped.");
-					continue;
-				}
-
-				WriteLine($"  {repository.Name}", ColorRepository);
-				var task = repository.OpenInGitKraken();
-				tasks.Add(task);
-				switch (options.OpenInGitKrakenDelay)
-				{
-					case 0:
-						await task;
-						break;
-					case > 0:
-						task.Wait(options.OpenInGitKrakenDelay);
-						break;
-				}
-			}
-
-			await Task.WhenAll(tasks);
-
-			WriteLine();
-			WriteLine($"Opened {tasks.Count} repositories in GitKraken.");
-
-			await Task.Delay(5000);
-			Focus();
-
-			return true;
-		}
-
-
-		private static bool ListAllChanges(IEnumerable<GitRepository> repositories, int longestName)
-		{
-			WriteLine("List all repositories with status:");
-
-			foreach (var repository in repositories)
-			{
-				var branch = repository.ActiveBranch;
-				if (branch == null)
-				{
-					WriteLine("HEAD detached", ConsoleColor.DarkRed);
-					continue;
-				}
-
-				Write(repository.Name, ColorRepository);
-				SetCursorLeft(longestName + 8);
-				Write($" {GetNameWithTrackingInfo(branch)}", ColorBranchLocal);
-				Write("...");
-				Write(branch.Remote, ColorBranchRemote);
-				WriteLine();
-				if (!string.IsNullOrWhiteSpace(branch.Status))
-					WriteLine(branch.Status);
-				WriteLine();
-			}
-
-			return true;
+			Console.Title = $"{exe}: {workPath}";
 		}
 	}
 }

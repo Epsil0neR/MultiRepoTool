@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace MultiRepoTool.Extensions
@@ -13,21 +14,43 @@ namespace MultiRepoTool.Extensions
 
 	public static class GitRepositoryExtensions
 	{
+		public static IEnumerable<GitBranch> Search(this GitRepository repository, IReadOnlyList<string> filters, bool includeActive)
+		{
+			foreach (var branch in repository.Branches)
+			{
+				var name = branch.HasLocal()
+					? branch.Local
+					: branch.Remote;
+
+				if (branch.IsActive && includeActive)
+					yield return branch;
+
+				if (filters.Any(x => name.Contains(x, StringComparison.InvariantCultureIgnoreCase)))
+					yield return branch;
+			}
+		}
+
 		public static IEnumerable<GitBranch> Search(this GitRepository repository, string query, bool includeActive)
 		{
 			foreach (var branch in repository.Branches)
 			{
 				var name = branch.HasLocal() ? branch.Local : branch.Remote;
-				if (name.Contains(query, StringComparison.InvariantCultureIgnoreCase))
+				if (branch.IsActive && includeActive)
 					yield return branch;
-				else if (includeActive && branch.IsActive)
+
+				if (name.Contains(query, StringComparison.InvariantCultureIgnoreCase))
 					yield return branch;
 			}
 		}
 
 		public static Dictionary<GitRepository, IEnumerable<GitBranch>> Search(this IEnumerable<GitRepository> repositories, string query, bool includeActive)
 		{
-			return repositories.ToDictionary(x => x, x => x.Search(query, includeActive));
+			var filters = (query ?? string.Empty)
+				.Split(',')
+				.Select(x => x.Trim())
+				.Where(x => !string.IsNullOrWhiteSpace(x))
+				.ToList();
+			return repositories.ToDictionary(x => x, x => x.Search(filters, includeActive));
 		}
 
 		public static Task OpenInGitKraken(this GitRepository repository)
@@ -98,6 +121,20 @@ namespace MultiRepoTool.Extensions
 		public static bool IsLocalOnly(this GitBranch branch)
 		{
 			return HasLocal(branch) && !HasRemote(branch);
+		}
+
+		public static string GetNameWithTrackingInfo(this GitBranch branch)
+		{
+			if (branch == null)
+				return string.Empty;
+
+			var name = branch.HasLocal() ? branch.Local : branch.Remote;
+			if (branch.Behind == 0 && branch.Ahead == 0) return name;
+			var sb = new StringBuilder();
+			sb.Append(name);
+			if (branch.Ahead > 0) sb.Append($"[A:{branch.Ahead}]");
+			if (branch.Behind > 0) sb.Append($"[B:{branch.Behind}]");
+			return sb.ToString();
 		}
 	}
 }
