@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
   </PropertyGroup>
@@ -15,6 +15,8 @@
 
   <PropertyGroup>
     <ReleaseNotes>
+      v2.0.1:
+      - Fix issue with displaying user input during menu navigation.
       v2.0.0:
       - Added menu support. Now application can work continuesly.
       - Improved some parts of functioanlity.

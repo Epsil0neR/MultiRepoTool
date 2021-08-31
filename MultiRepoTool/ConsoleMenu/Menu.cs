@@ -129,7 +129,7 @@ namespace MultiRepoTool.ConsoleMenu
 				// Handle user input
 				do
 				{
-					var input = Console.ReadKey(false);
+					var input = Console.ReadKey(true);
 
 					switch (input.Key)
 					{
