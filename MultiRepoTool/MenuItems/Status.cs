@@ -38,12 +38,30 @@ namespace MultiRepoTool.MenuItems
 				ConsoleUtils.Write("...");
 				ConsoleUtils.Write(branch.Remote, Constants.ColorBranchRemote);
 				ConsoleUtils.WriteLine();
-				if (!string.IsNullOrWhiteSpace(branch.Status))
-					ConsoleUtils.WriteLine(branch.Status);
+				PrintStatus(branch.Status);
 				ConsoleUtils.WriteLine();
 			}
 
 			return true;
+		}
+
+		private static void PrintStatus(string status)
+		{
+			if (string.IsNullOrWhiteSpace(status))
+				return;
+
+			var lines = status.Split('\n');
+
+			foreach (var line in lines) 
+				ConsoleUtils.WriteLine(line, GetColor(line));
+		}
+
+		private static ConsoleColor GetColor(string line)
+		{
+			if (line.EndsWith(".csproj") || line.EndsWith(".sln"))   
+				return ConsoleColor.Blue;
+
+			return ConsoleColor.White;
 		}
 	}
 }

@@ -86,9 +86,8 @@ namespace MultiRepoTool
 				LoopNavigation = true,
 			};
 
-			RunFromOptions(menu, options);
-
-			menu.Run();
+			if (!RunFromOptions(menu, options) || !options.Menu)
+				menu.Run();
 
 			if (options.AutoExit)
 				return;
@@ -98,15 +97,33 @@ namespace MultiRepoTool
 			Console.ReadKey(false);
 		}
 
-		private static void RunFromOptions(Menu menu, Options options)
+		private static bool RunFromOptions(Menu menu, Options options)
 		{
 			if (options.Fetch)
+			{
 				menu.Items.OfType<MenuItems.Fetch>().FirstOrDefault()?.Execute(menu);
+				return true;
+			}
 
 			if (options.OpenInGitKraken)
+			{
 				menu.Items.OfType<MenuItems.OpenInGitKraken>().FirstOrDefault()?.Exec(options.Search, true);
-			else if (!string.IsNullOrWhiteSpace(options.Search))
+				return true;
+			}
+
+			if (!string.IsNullOrWhiteSpace(options.Search))
+			{
 				menu.Items.OfType<MenuItems.Search>().FirstOrDefault()?.Exec(options.Search, true);
+				return true;
+			}
+
+			if (!options.Menu)
+			{
+				menu.Items.OfType<MenuItems.Status>()?.FirstOrDefault()?.Execute(menu);
+				return true;
+			}
+
+			return false;
 		}
 
 		private static void SetTitle(string workPath)

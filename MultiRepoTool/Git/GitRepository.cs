@@ -10,7 +10,7 @@ namespace MultiRepoTool.Git
 	{
 		public const string GitSubFolder = ".git";
 		public const string CommandPull = "git pull";
-		public const string CommandFetch = "git fetch";
+		public const string CommandFetch = "git fetch --quiet";
 		public const string CommandPush = "git push";
 		public const string CommandBranchStatus = "git status -sb";
 		public const string CommandListBranchesLocal = "git branch -l";

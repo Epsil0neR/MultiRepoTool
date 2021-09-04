@@ -18,5 +18,8 @@ namespace MultiRepoTool
 
 		[Option('s', "search", HelpText = "Search for a branches with name.")]
 		public string Search { get; set; }
+
+		[Option('m', "menu", Default = true, HelpText = "Indicates if menu will be shown. (Default = true)")] 
+		public bool Menu { get; set; } = true;
 	}
 }
