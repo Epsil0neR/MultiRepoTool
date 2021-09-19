@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using MultiRepoTool.ConsoleMenu;
-using MultiRepoTool.Git;
+﻿using MultiRepoTool.ConsoleMenu;
+using System;
 
 namespace MultiRepoTool.MenuItems
 {
 	public class Exit : MenuItem
 	{
-		public IEnumerable<GitRepository> Repositories { get; }
-
-		public Exit(IEnumerable<GitRepository> repositories)
+		public Exit()
 			: base("Exit")
 		{
-			Repositories = repositories;
+		}
+
+		public Exit(string title)
+			: base(title)
+		{
 		}
 
 		public override bool Execute(Menu menu)

@@ -17,6 +17,7 @@ namespace MultiRepoTool.Git
 		public const string CommandListBranchesRemote = "git branch -r";
 		public const string CommandCurrentBranch = "git branch --show-current";
 		public const string CommandListRemoteNames = "git remote";
+		public const string CommandDiff = "git log --pretty=%B {0}...{1}";
 	}
 
 	public class GitRepository

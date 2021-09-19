@@ -48,7 +48,7 @@ namespace MultiRepoTool.Extensions
 			var filters = (query ?? string.Empty)
 				.Split(',')
 				.Select(x => x.Trim())
-				.Where(x => !string.IsNullOrWhiteSpace(x))
+				.Where(x => !string.IsNullOrEmpty(x))
 				.ToList();
 			return repositories.ToDictionary(x => x, x => x.Search(filters, includeActive));
 		}

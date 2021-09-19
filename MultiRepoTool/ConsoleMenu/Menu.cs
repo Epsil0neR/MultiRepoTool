@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MultiRepoTool.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -19,16 +20,18 @@ namespace MultiRepoTool.ConsoleMenu
 
 		public int CurrentTop { get; private set; }
 
-		public bool LoopNavigation { get; set; }
+		public bool LoopNavigation { get; set; } //TODO: Not used :(
 
-		public void Run()
+		public bool PreventNewLineOnExecution { get; set; }
+
+		public void Run(string menuText = "Select from menu using arrows up, down, Enter and x (to exit):")
 		{
 			var items = Items.ToList();
 
 			Selected ??= items.First();
 
 			if (Console.CursorLeft != 0)
-				WriteLine();
+				ConsoleUtils.WriteLine();
 			CurrentTop = Console.CursorTop;
 
 			var @continue = true;
@@ -37,7 +40,7 @@ namespace MultiRepoTool.ConsoleMenu
 				ClearMenu();
 
 				// Print menu
-				WriteLine("Select from menu using arrows up, down, Enter and x (to exit):");
+				ConsoleUtils.WriteLine(menuText);
 				foreach (var item in items)
 				{
 					PrintMenuItem(item);
@@ -61,9 +64,11 @@ namespace MultiRepoTool.ConsoleMenu
 						Selected = items
 									   .Take(index)
 									   .LastOrDefault(x => x.CanExecute) ??
-								   items
-									   .Skip(index)
-									   .Last(x => x.CanExecute);
+								   (LoopNavigation
+									   ? items
+										   .Skip(index)
+										   .Last(x => x.CanExecute)
+									   : Selected);
 
 						break;
 					case MenuNavigation.SelectNext:
@@ -81,9 +86,11 @@ namespace MultiRepoTool.ConsoleMenu
 						Selected = items
 									   .Skip(index + 1)
 									   .FirstOrDefault(x => x.CanExecute) ??
-								   items
-									   .Take(index)
-									   .First(x => x.CanExecute);
+								   (LoopNavigation
+									   ? items
+										   .Take(index)
+										   .First(x => x.CanExecute)
+									   : Selected);
 						break;
 					case MenuNavigation.Execute:
 						if (Selected == null)
@@ -93,10 +100,10 @@ namespace MultiRepoTool.ConsoleMenu
 						@continue = Selected.Execute(this);
 
 						if (Console.CursorLeft != 0)
-							WriteLine();
+							ConsoleUtils.WriteLine();
 
-						if (Console.CursorTop != 0)
-							WriteLine();
+						if (Console.CursorTop != 0 && !PreventNewLineOnExecution)
+							ConsoleUtils.WriteLine();
 
 						CurrentTop = Console.CursorTop;
 
@@ -116,8 +123,8 @@ namespace MultiRepoTool.ConsoleMenu
 			var fore = isSelected ? Console.BackgroundColor : Console.ForegroundColor;
 			var back = isSelected ? Console.ForegroundColor : Console.BackgroundColor;
 			var text = item.Title;
-			Write("  ");
-			WriteLine(text, fore, back);
+			ConsoleUtils.Write("  ");
+			ConsoleUtils.WriteLine(text, fore, back);
 		}
 
 		private static MenuNavigation ReadMenuNavigation()
@@ -166,43 +173,5 @@ namespace MultiRepoTool.ConsoleMenu
 				CurrentTop = currentTop.Value;
 		}
 
-		private static void Write(string text, ConsoleColor? foreground = null, ConsoleColor? background = null)
-		{
-
-			var fore = Console.ForegroundColor;
-			var back = Console.BackgroundColor;
-
-			if (foreground.HasValue)
-				Console.ForegroundColor = foreground.Value;
-			if (background.HasValue)
-				Console.BackgroundColor = background.Value;
-
-			Console.Write(text);
-
-			Console.ForegroundColor = fore;
-			Console.BackgroundColor = back;
-		}
-
-		private static void WriteLine(string text = null, ConsoleColor? foreground = null, ConsoleColor? background = null)
-		{
-			if (text == null)
-			{
-				Console.WriteLine();
-				return;
-			}
-
-			var fore = Console.ForegroundColor;
-			var back = Console.BackgroundColor;
-
-			if (foreground.HasValue)
-				Console.ForegroundColor = foreground.Value;
-			if (background.HasValue)
-				Console.BackgroundColor = background.Value;
-
-			Console.WriteLine(text);
-
-			Console.ForegroundColor = fore;
-			Console.BackgroundColor = back;
-		}
 	}
 }

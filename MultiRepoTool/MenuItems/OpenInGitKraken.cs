@@ -1,10 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using MultiRepoTool.ConsoleMenu;
+﻿using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Extensions;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MultiRepoTool.MenuItems
 {
@@ -45,7 +45,7 @@ namespace MultiRepoTool.MenuItems
 
 			foreach (var repository in Repositories)
 			{
-				if (filters.Count > 1 && filters.All(x => !repository.Name.Contains(x, StringComparison.InvariantCultureIgnoreCase)))
+				if (filters.Count > 0 && filters.All(x => !repository.Name.Contains(x, StringComparison.InvariantCultureIgnoreCase)))
 					continue;
 
 				ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Opening ");

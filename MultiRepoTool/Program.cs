@@ -66,20 +66,18 @@ namespace MultiRepoTool
 
 			IoC.RegisterInstance(repositories);
 
-			var order = new List<Type>
+			var menuItems = new List<MenuItem>
 			{
-				typeof(MenuItems.Reload),
-				typeof(MenuItems.Fetch),
-				typeof(MenuItems.Search),
-				typeof(MenuItems.Status),
-				typeof(MenuItems.OpenInGitKraken),
-				typeof(MenuItems.EndActionsSeparator),
-				typeof(MenuItems.ClearConsole),
-				typeof(MenuItems.Exit),
+				IoC.Resolve<MenuItems.Reload>(),
+				IoC.Resolve<MenuItems.Fetch>(),
+				IoC.Resolve<MenuItems.Search>(),
+				IoC.Resolve<MenuItems.Status>(),
+				IoC.Resolve<MenuItems.OpenInGitKraken>(),
+				IoC.Resolve<MenuItems.CheckDiffs>(),
+				IoC.Resolve<MenuItems.EndActionsSeparator>(),
+				IoC.Resolve<MenuItems.ClearConsole>(),
+				IoC.Resolve<MenuItems.Exit>(),
 			};
-			var menuItems = IoC.ResolveAll<MenuItem>()
-				.OrderBy(x => order.IndexOf(x.GetType()))
-				.ToList();
 
 			var menu = new Menu(menuItems)
 			{

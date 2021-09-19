@@ -4,8 +4,11 @@ namespace MultiRepoTool.ConsoleMenu
 {
 	public class MenuItem
 	{
-		public string Title { get; }
+		public string Title { get; protected set; }
+		
 		public Func<Menu, bool> Func { get; protected set; }
+		
+		public bool HideExecutionText { get; set; }
 
 		protected MenuItem(string title)
 		{
@@ -27,6 +30,7 @@ namespace MultiRepoTool.ConsoleMenu
 			Func = _ => func();
 		}
 
+
 		/// <summary>
 		/// 
 		/// </summary>
@@ -34,7 +38,8 @@ namespace MultiRepoTool.ConsoleMenu
 		/// <returns></returns>
 		public virtual bool Execute(Menu menu)
 		{
-			Console.WriteLine($"Executing {Title}.");
+			if (!HideExecutionText)
+				Console.WriteLine($"Executing {Title}.");
 			return Func.Invoke(menu);
 		}
 
