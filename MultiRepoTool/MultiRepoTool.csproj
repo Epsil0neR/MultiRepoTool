@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>2.1.0</Version>
+    <Version>2.2.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
   </PropertyGroup>
@@ -15,6 +15,9 @@
 
   <PropertyGroup>
     <ReleaseNotes>
+      v2.2.0:
+      - Added Pull menu item.
+      - Extended navigation to navigate with first menu item character.
       v2.1.0:
       - Fixed bug with Open in GitKraken filter when providing only 1 filter.
       - Added feature to check differencies in selected branches.

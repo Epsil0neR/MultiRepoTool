@@ -200,6 +200,12 @@ namespace MultiRepoTool.Git
 			Reload();
 		}
 
+		public void Pull()
+		{
+			Executor.Execute("Pull repository", GitConst.CommandPull);
+			Reload();
+		}
+
 		public void Reload()
 		{
 			foreach (var branch in GetBranches())

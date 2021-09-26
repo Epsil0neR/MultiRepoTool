@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MultiRepoTool.Extensions;
 
 namespace MultiRepoTool.ConsoleMenu
 {
@@ -24,7 +25,7 @@ namespace MultiRepoTool.ConsoleMenu
 
 		public bool PreventNewLineOnExecution { get; set; }
 
-		public void Run(string menuText = "Select from menu using arrows up, down, Enter and x (to exit):")
+		public void Run(string menuText = "Select from menu using arrows up, down, Enter and first symbol of menu item:")
 		{
 			var items = Items.ToList();
 
@@ -46,8 +47,9 @@ namespace MultiRepoTool.ConsoleMenu
 					PrintMenuItem(item);
 				}
 
-				var navigation = ReadMenuNavigation();
+				var navigation = ReadMenuNavigation(out var symbol);
 				int index;
+				List<MenuItem> list;
 				switch (navigation)
 				{
 					case MenuNavigation.SelectPrevious:
@@ -61,14 +63,27 @@ namespace MultiRepoTool.ConsoleMenu
 						}
 
 						index = items.IndexOf(Selected);
-						Selected = items
-									   .Take(index)
-									   .LastOrDefault(x => x.CanExecute) ??
-								   (LoopNavigation
-									   ? items
-										   .Skip(index)
-										   .Last(x => x.CanExecute)
-									   : Selected);
+						list = items
+							.Take(index)
+							.Where(x => x.CanExecute)
+							.Reverse()
+							.ToList();
+						if (LoopNavigation)
+							items
+								.Skip(index + 1)
+								.Where(x=>x.CanExecute)
+								.Reverse()
+								.AddTo(list);
+
+						if (!symbol.HasValue)
+						{
+							Selected = list.FirstOrDefault() ?? Selected;
+						}
+						else
+						{
+							var filter = char.ToLowerInvariant(symbol.Value).ToString();
+							Selected = list.FirstOrDefault(x => x.Title.StartsWith(filter, StringComparison.InvariantCultureIgnoreCase)) ?? Selected;
+						}
 
 						break;
 					case MenuNavigation.SelectNext:
@@ -82,15 +97,26 @@ namespace MultiRepoTool.ConsoleMenu
 						}
 
 						index = items.IndexOf(Selected);
+						list = items
+							.Skip(index + 1)
+							.Where(x=>x.CanExecute)
+							.ToList();
+						if (LoopNavigation)
+							items
+								.Take(index)
+								.Where(x => x.CanExecute)
+								.AddTo(list);
 
-						Selected = items
-									   .Skip(index + 1)
-									   .FirstOrDefault(x => x.CanExecute) ??
-								   (LoopNavigation
-									   ? items
-										   .Take(index)
-										   .First(x => x.CanExecute)
-									   : Selected);
+						if (!symbol.HasValue)
+						{
+							Selected = list.FirstOrDefault() ?? Selected;
+						}
+						else
+						{
+							var filter = char.ToLowerInvariant(symbol.Value).ToString();
+							Selected = list.FirstOrDefault(x=>x.Title.StartsWith(filter, StringComparison.InvariantCultureIgnoreCase)) ?? Selected;
+						}
+
 						break;
 					case MenuNavigation.Execute:
 						if (Selected == null)
@@ -127,9 +153,10 @@ namespace MultiRepoTool.ConsoleMenu
 			ConsoleUtils.WriteLine(text, fore, back);
 		}
 
-		private static MenuNavigation ReadMenuNavigation()
+		private static MenuNavigation ReadMenuNavigation(out char? symbol)
 		{
 			var cursorVisible = Console.CursorVisible;
+			symbol = null;
 			Console.CursorVisible = false;
 			try
 			{
@@ -146,8 +173,16 @@ namespace MultiRepoTool.ConsoleMenu
 							return MenuNavigation.SelectNext;
 						case ConsoleKey.Enter:
 							return MenuNavigation.Execute;
-						case ConsoleKey.X:
-							return MenuNavigation.None;
+						default:
+							if (char.IsLetter(input.KeyChar))
+							{
+								symbol = input.KeyChar;
+
+								return input.Modifiers.HasFlag(ConsoleModifiers.Shift) 
+									? MenuNavigation.SelectPrevious 
+									: MenuNavigation.SelectNext;
+							}
+							continue;
 					}
 				} while (true);
 			}
