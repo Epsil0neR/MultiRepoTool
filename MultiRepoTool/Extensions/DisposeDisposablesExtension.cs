@@ -6,7 +6,7 @@ using Unity.Builder;
 using Unity.Extension;
 using Unity.Strategies;
 
-namespace MultiRepoTool
+namespace MultiRepoTool.Extensions
 {
     /// <summary>
     /// This Unity container extension disposes previously resolved IDisposable types when the container is disposed.

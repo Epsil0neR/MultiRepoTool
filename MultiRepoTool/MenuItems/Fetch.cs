@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using MultiRepoTool.ConsoleMenu;
+﻿using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
+using System;
+using System.Collections.Generic;
+using MultiRepoTool.Extensions;
 
 namespace MultiRepoTool.MenuItems
 {
@@ -22,8 +23,16 @@ namespace MultiRepoTool.MenuItems
 			foreach (var repository in Repositories)
 			{
 				ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Fetching ");
-				ConsoleUtils.WriteLine(repository.Name, Constants.ColorRepository);
-				repository.Fetch();
+				ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
+				try
+				{
+					repository.Fetch();
+					ConsoleUtils.Write(" " + repository.ActiveBranch.GetNameWithTrackingInfo(), Constants.ColorBranchLocal);
+				}
+				finally
+				{
+					ConsoleUtils.WriteLine();
+				}
 			}
 			return true;
 		}
