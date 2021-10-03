@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using MultiRepoTool.Utils;
 
 namespace MultiRepoTool.Extensions
 {
@@ -25,7 +26,23 @@ namespace MultiRepoTool.Extensions
 			}
 		}
 
-		public static IEnumerable<GitBranch> Search(this GitRepository repository, string query, bool includeActive)
+        public static IEnumerable<GitBranch> Search(this GitRepository repository, IReadOnlyList<SearchFilter> filters, bool includeActive)
+        {
+            foreach (var branch in repository.Branches)
+            {
+                var name = branch.HasLocal()
+                    ? branch.Local
+                    : branch.Remote;
+
+                if (branch.IsActive && includeActive)
+                    yield return branch;
+
+                if (filters.Any(x => x.Matched(name)))
+                    yield return branch;
+            }
+        }
+
+        public static IEnumerable<GitBranch> Search(this GitRepository repository, string query, bool includeActive)
 		{
 			foreach (var branch in repository.Branches)
 			{
@@ -44,11 +61,12 @@ namespace MultiRepoTool.Extensions
 				.Split(',')
 				.Select(x => x.Trim())
 				.Where(x => !string.IsNullOrEmpty(x))
+                .Select(x=> SearchFilter.CreateFrom(x))
 				.ToList();
 			return repositories.ToDictionary(x => x, x => x.Search(filters, includeActive));
 		}
 
-		public static Task OpenInGitKraken(this GitRepository repository)
+        public static Task OpenInGitKraken(this GitRepository repository)
 		{
 			var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
 			var exePath = $"{localAppData}/gitkraken/update.exe";

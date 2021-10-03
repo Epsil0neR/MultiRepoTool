@@ -66,6 +66,5 @@ namespace MultiRepoTool.Utils
 
 			return rv;
 		}
-
 	}
 }

@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>2.3.0</Version>
+    <Version>2.4.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
   </PropertyGroup>
@@ -15,6 +15,8 @@
 
   <PropertyGroup>
     <ReleaseNotes>
+      v2.4.0:
+      - Updated filters (Search, Open in GK) to use '*' in filter start/end to indicate filter mode.
       v2.3.0:
       - Improved Fetch action to show active branch info after fetch.
       v2.2.0:
