@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>2.4.0</Version>
+    <Version>2.5.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
   </PropertyGroup>
@@ -15,6 +15,10 @@
 
   <PropertyGroup>
     <ReleaseNotes>
+      v2.5.0:
+      - Added short status menu item that is outputs only repository and active branch status.
+      - Added folders clean-up menu item to delete all .vs, bin, obj folders inside repository. Set of folters to clean-up is customizable.
+      - Open In GitKraken menu item is visible only when GitKraken is installed.
       v2.4.0:
       - Updated filters (Search, Open in GK) to use '*' in filter start/end to indicate filter mode.
       v2.3.0:

@@ -1,11 +1,11 @@
 ﻿using System;
 
-namespace MultiRepoTool.Utils
+namespace MultiRepoTool
 {
     public class SearchFilter
     {
-        private string _filter;
-        private Mode _mode;
+        private readonly string _filter;
+        private readonly Mode _mode;
 
         private SearchFilter(string filter, Mode mode)
         {
@@ -54,8 +54,4 @@ namespace MultiRepoTool.Utils
             return string.Equals(input, _filter, StringComparison.InvariantCultureIgnoreCase);
         }
     }
-
-    public static class SearchUtils { }
-
-
 }

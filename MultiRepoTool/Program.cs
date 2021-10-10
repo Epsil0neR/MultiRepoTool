@@ -72,13 +72,17 @@ namespace MultiRepoTool
 				IoC.Resolve<MenuItems.Fetch>(),
 				IoC.Resolve<MenuItems.Pull>(),
 				IoC.Resolve<MenuItems.Search>(),
+				IoC.Resolve<MenuItems.StatusShort>(),
 				IoC.Resolve<MenuItems.Status>(),
-				IoC.Resolve<MenuItems.OpenInGitKraken>(),
+				SharedUtils.IsGitKrakenInstalled() ? IoC.Resolve<MenuItems.OpenInGitKraken>() : null,
 				IoC.Resolve<MenuItems.CheckDiffs>(),
+				IoC.Resolve<MenuItems.CleanFolders>(),
 				IoC.Resolve<MenuItems.EndActionsSeparator>(),
 				IoC.Resolve<MenuItems.ClearConsole>(),
 				IoC.Resolve<MenuItems.Exit>(),
-			};
+			}
+                .Where(x=>x is not null)
+                .ToList();
 
 			var menu = new Menu(menuItems)
 			{

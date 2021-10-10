@@ -12,6 +12,11 @@ namespace MultiRepoTool.Utils
 
 		public static void Write(string text, ConsoleColor? foreground = null, ConsoleColor? background = null)
 		{
+            if (foreground is null && background is null)
+            {
+                Console.Write(text);
+                return;
+            }
 
 			var fore = Console.ForegroundColor;
 			var back = Console.BackgroundColor;
@@ -35,7 +40,13 @@ namespace MultiRepoTool.Utils
 				return;
 			}
 
-			var fore = Console.ForegroundColor;
+            if (foreground is null && background is null)
+            {
+                Console.WriteLine(text);
+                return;
+            }
+
+            var fore = Console.ForegroundColor;
 			var back = Console.BackgroundColor;
 
 			if (foreground.HasValue)
