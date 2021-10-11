@@ -26,7 +26,7 @@ namespace MultiRepoTool.MenuItems
                 return true;
 
             var cmdFilters = string.Join(',', filters);
-            var cmd = $"for /d /r . %%d in ({cmdFilters}) do @if exist \"%% d\" rd /s/q \"%% d\"";
+            var cmd = $"for /d /r . %%d in ({cmdFilters}) do @if exist \"%%d\" rd /s/q \"%%d\"";
             foreach (var repository in Repositories)
             {
                 ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Cleaning ");
