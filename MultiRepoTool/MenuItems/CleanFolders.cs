@@ -26,15 +26,12 @@ namespace MultiRepoTool.MenuItems
             if (!filters.Any())
                 return true;
 
-            var cmdFilters = string.Join(',', filters);
-            var cmd = $"for /d /r . %%d in ({cmdFilters}) do @if exist \"%%d\" rd /s/q \"%%d\"";
             foreach (var repository in Repositories)
             {
                 ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Cleaning ");
                 ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
                 try
                 {
-                    //repository.Executor.Execute("Clean-up", cmd);
                     var dir = repository.Executor.WorkingDirectory;
                     var allDirs = dir.GetDirectories("*", SearchOption.AllDirectories);
                     var filtered = allDirs
