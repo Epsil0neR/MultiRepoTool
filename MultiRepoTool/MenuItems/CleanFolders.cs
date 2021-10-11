@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
@@ -33,7 +34,20 @@ namespace MultiRepoTool.MenuItems
                 ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
                 try
                 {
-                    repository.Executor.Execute("Clean-up", cmd);
+                    //repository.Executor.Execute("Clean-up", cmd);
+                    var dir = repository.Executor.WorkingDirectory;
+                    var allDirs = dir.GetDirectories("*", SearchOption.AllDirectories);
+                    var filtered = allDirs
+                        .Where(x => filters.Contains(x.Name))
+                        .ToList();
+                    foreach (var directory in filtered)
+                    {
+                        try
+                        {
+                            directory.Delete(true);
+                        }
+                        catch (Exception) { }
+                    }
                 }
                 finally
                 {
