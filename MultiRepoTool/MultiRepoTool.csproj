@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>2.5.0</Version>
+    <Version>2.5.1</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
   </PropertyGroup>
@@ -15,6 +15,8 @@
 
   <PropertyGroup>
     <ReleaseNotes>
+      v2.5.1:
+      - Fix Clean-up command.
       v2.5.0:
       - Added short status menu item that is outputs only repository and active branch status.
       - Added folders clean-up menu item to delete all .vs, bin, obj folders inside repository. Set of folters to clean-up is customizable.
