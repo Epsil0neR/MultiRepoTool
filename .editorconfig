@@ -1,0 +1,12 @@
+# To learn more about .editorconfig see https://aka.ms/editorconfigdocs
+
+# All files
+[*]
+indent_style = space
+csharp_space_after_cast=true
+# Xml files
+[*.xml]
+indent_size = 2
+
+[*.cs]
+dotnet_sort_system_directives_first = true
