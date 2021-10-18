@@ -15,7 +15,7 @@ namespace MultiRepoTool
 
 		[Option("gk", HelpText = "Open all repositories in GitKraken. -s --search can filter repositories by name.")]
 		public bool OpenInGitKraken { get; set; }
-
+        
 		[Option('s', "search", HelpText = "Search for a branches with name.")]
 		public string Search { get; set; }
 

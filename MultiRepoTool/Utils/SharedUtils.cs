@@ -9,7 +9,7 @@ namespace MultiRepoTool.Utils
     {
         public static bool IsGitKrakenInstalled()
         {
-            string exePath = GetGitKrakenPath();
+            var exePath = GetGitKrakenPath();
             return File.Exists(exePath);
         }
 
@@ -39,7 +39,35 @@ namespace MultiRepoTool.Utils
             process.Start();
             return process.WaitForExitAsync();
         }
+
+        public static Version GetVersion()
+        {
+            var path = GetExecutablePath();
+            if (string.IsNullOrWhiteSpace(path))
+                return null;
+
+            var info = FileVersionInfo.GetVersionInfo(path);
+            if (string.IsNullOrWhiteSpace(info.ProductVersion))
+                return null;
+
+            return Version.Parse(info.ProductVersion);
+        }
+
+        [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+        static extern uint GetModuleFileName(IntPtr hModule, System.Text.StringBuilder lpFilename, int nSize);
+        static readonly int MAX_PATH = 255;
+        public static string GetExecutablePath()
+        {
+            if (System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                var sb = new System.Text.StringBuilder(MAX_PATH);
+                GetModuleFileName(IntPtr.Zero, sb, MAX_PATH);
+                return sb.ToString();
+            }
+            else
+            {
+                return System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            }
+        }
     }
-
-
 }

@@ -30,10 +30,10 @@ namespace MultiRepoTool
 
 		private static void ConfigureIoC()
 		{
-
+            IoC.RegisterInstance(SharedUtils.GetVersion());
 		}
 
-		private static void WithNotParsed(IEnumerable<Error> enumerable)
+        private static void WithNotParsed(IEnumerable<Error> enumerable)
 		{
 			Console.WriteLine("Error parsing arguments.");
 			Console.Write("Press any key to exit...");
@@ -51,6 +51,7 @@ namespace MultiRepoTool
 				Console.WriteLine("Path to directory with all repositories not found.");
 				Console.Write("Press any key to exit...");
 				Console.ReadKey(false);
+                return;
 			}
 
 			SetTitle(di.FullName);
@@ -134,8 +135,9 @@ namespace MultiRepoTool
 		{
 			var asm = Assembly.GetExecutingAssembly();
 			var exe = Path.GetFileName(asm.Location);
+            var ver = IoC.Resolve<Version>();
 
-			Console.Title = $"{exe}: {workPath}";
+			Console.Title = $"{exe} v{ver}: {workPath}";
 		}
 	}
 }
