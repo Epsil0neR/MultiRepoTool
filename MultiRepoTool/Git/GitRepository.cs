@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using MultiRepoTool.Extensions;
 
 namespace MultiRepoTool.Git
@@ -27,6 +28,9 @@ namespace MultiRepoTool.Git
 
 		public CommandExecutor Executor { get; }
 
+        /// <summary>
+        /// Repository name.
+        /// </summary>
 		public string Name { get; }
 
 		/// <summary>
@@ -34,15 +38,23 @@ namespace MultiRepoTool.Git
 		/// </summary>
 		public DirectoryInfo Directory { get; }
 
+        /// <summary>
+        /// Remote branches.
+        /// </summary>
 		public IEnumerable<GitRemote> Remotes { get; }
 
-		/// <summary>
-		/// Gets GIT repository from <paramref name="directory"/> or null if directory is not a GIT repository.
-		/// </summary>
-		/// <param name="directory"></param>
-		/// <returns></returns>
-		public static GitRepository FromDirectory(DirectoryInfo directory, string name = null)
-		{
+        /// <summary>
+        /// All .sln files in repository.
+        /// </summary>
+        public Task<IReadOnlyList<FileInfo>> SolutionFiles { get; private set; }
+
+        /// <summary>
+        /// Gets GIT repository from <paramref name="directory"/> or null if directory is not a GIT repository.
+        /// </summary>
+        /// <param name="directory"></param>
+        /// <returns></returns>
+        public static GitRepository FromDirectory(DirectoryInfo directory, string name = null)
+        {
 			if (directory == null)
 				return null;
 
@@ -58,16 +70,17 @@ namespace MultiRepoTool.Git
 
 		private GitRepository(DirectoryInfo directory, string name = null)
 		{
-			Directory = directory;
+            Directory = directory;
 			Executor = new CommandExecutor(directory);
 
 			Name = string.IsNullOrWhiteSpace(name) ? Directory.Name : name;
 			Remotes = GetRemotes().ToList();
 			_branches.ReplaceAll(GetBranches());
 			ActiveBranch = Branches.FirstOrDefault(x => x.IsActive);
-		}
+            FetchSolutionFiles();
+        }
 
-		public IReadOnlyList<GitBranch> Branches => _branches;
+        public IReadOnlyList<GitBranch> Branches => _branches;
 
 		public GitBranch ActiveBranch
 		{
@@ -232,6 +245,12 @@ namespace MultiRepoTool.Git
 				}
 			}
 			ActiveBranch = _branches.FirstOrDefault(x => x.IsActive);
+            FetchSolutionFiles();
 		}
-	}
+
+        private void FetchSolutionFiles()
+        {
+            SolutionFiles = Task.Run(() => (IReadOnlyList<FileInfo>) Directory.GetFiles("*.sln", SearchOption.AllDirectories));
+        }
+    }
 }

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using MultiRepoTool.ConsoleMenu;
-using MultiRepoTool.Extensions;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
 
@@ -22,26 +22,35 @@ namespace MultiRepoTool.MenuItems
 
         public override bool Execute(Menu menu)
         {
-            var menuItems = Repositories
-                .SelectMany(ToMenuItem)
-                .ToList();
-            menuItems.Add(new EndActionsSeparator());
-            menuItems.Add(new Exit("Done"));
+            Execute().GetAwaiter().GetResult();
+            return true;
+        }
 
-            var reposMenu = new Menu(menuItems)
+        private async Task Execute()
+        {
+            var filesPerRepository = await Task.WhenAll(Repositories.Select(x => x.SolutionFiles));
+            var menus = new List<MenuItem>();
+            for (int index = 0; index < filesPerRepository.Length; index++)
+            {
+                var files = filesPerRepository[index];
+                var repo = Repositories.ElementAt(index);
+
+                menus.AddRange(ToMenuItem(repo, files));
+            }
+
+            menus.Add(new EndActionsSeparator());
+            menus.Add(new Exit("Done"));
+
+            var reposMenu = new Menu(menus)
             {
                 PreventNewLineOnExecution = true,
                 LoopNavigation = true
             };
             reposMenu.Run();
-
-            return true;
         }
 
-        private IEnumerable<MenuItem> ToMenuItem(GitRepository repository)
+        private IEnumerable<MenuItem> ToMenuItem(GitRepository repository, IReadOnlyList<FileInfo> files)
         {
-            var files = repository.Directory.GetFiles("*.sln", SearchOption.AllDirectories);
-        
             if (!files.Any())
                 yield break;
 

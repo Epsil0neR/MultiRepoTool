@@ -63,9 +63,10 @@ namespace MultiRepoTool
 			var directories = di.GetDirectories();
 			var repositories = directories
 				.Select(x => GitRepository.FromDirectory(x))
-				.Where(x => x != null);
+				.Where(x => x != null)
+                .ToList();
 
-			IoC.RegisterInstance(repositories);
+			IoC.RegisterInstance<IEnumerable<GitRepository>>(repositories);
 
 			var menuItems = new List<MenuItem>
 			{

@@ -67,6 +67,8 @@ namespace PublishedZipper
             {
                 WriteFileToArchive(archive, file);
             }
+
+            path.OpenInExplorer();
         }
 
         private static void WriteFileToArchive(ZipArchive archive, FileInfo file)
@@ -87,6 +89,15 @@ namespace PublishedZipper
                 return null;
 
             return Version.Parse(info.ProductVersion);
+        }
+
+        public static void OpenInExplorer(this string filePath)
+        {
+            if (!File.Exists(filePath))
+                return;
+
+            string argument = $"/select, \"{filePath}\"";
+            Process.Start("explorer.exe", argument);
         }
     }
 }

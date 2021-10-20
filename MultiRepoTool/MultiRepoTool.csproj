@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>2.6.1</Version>
+    <Version>2.6.2</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
   </PropertyGroup>
@@ -15,6 +15,8 @@
 
   <PropertyGroup>
     <ReleaseNotes>
+        v2.6.2:
+        - Significant performance improvement. Reduced repository object creation to one per folder.
         v2.6.1:
         - Add application version to window title.
         v2.6.0:
