@@ -10,11 +10,13 @@ namespace MultiRepoTool.MenuItems
     public class StatusShort : MenuItem
     {
         public IEnumerable<GitRepository> Repositories { get; }
+        public Options Options { get; }
 
-        public StatusShort(IEnumerable<GitRepository> repositories)
+        public StatusShort(IEnumerable<GitRepository> repositories, Options options)
             : base("Status short")
         {
             Repositories = repositories;
+            Options = options;
         }
 
         public override bool Execute(Menu menu)
@@ -23,6 +25,9 @@ namespace MultiRepoTool.MenuItems
 
             foreach (var repository in Repositories)
             {
+                if (Options.ReloadBeforeStatus)
+                    repository.Reload();
+
                 ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - ");
                 ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
                 ConsoleUtils.Write(" ");

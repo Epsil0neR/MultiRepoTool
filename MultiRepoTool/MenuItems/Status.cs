@@ -11,12 +11,14 @@ namespace MultiRepoTool.MenuItems
 	public class Status : MenuItem
 	{
 		public IEnumerable<GitRepository> Repositories { get; }
+        public Options Options { get; }
 
-		public Status(IEnumerable<GitRepository> repositories)
+        public Status(IEnumerable<GitRepository> repositories, Options options)
 			: base("Status")
-		{
-			Repositories = repositories;
-		}
+        {
+            Repositories = repositories;
+            Options = options;
+        }
 
 		public override bool Execute(Menu menu)
 		{
@@ -25,6 +27,9 @@ namespace MultiRepoTool.MenuItems
 			var longestNameLength = Repositories.Max(x => x.Name.Length);
 			foreach (var repository in Repositories)
 			{
+                if (Options.ReloadBeforeStatus)
+                    repository.Reload();
+
 				var branch = repository.ActiveBranch;
 				if (branch == null)
 				{

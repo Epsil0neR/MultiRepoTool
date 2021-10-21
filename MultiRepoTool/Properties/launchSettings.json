@@ -2,7 +2,7 @@
   "profiles": {
     "MultiRepoTool": {
       "commandName": "Project",
-      "commandLineArgs": "--path \"C:\\Projects\\_git\\TradeZero1\""
+      "commandLineArgs": "--path \"C:\\Projects\\_git\\TradeZero1\" --reload-before-status=true"
     }
   }
 }

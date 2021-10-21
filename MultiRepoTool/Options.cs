@@ -21,5 +21,8 @@ namespace MultiRepoTool
 
 		[Option('m', "menu", Default = true, HelpText = "Indicates if menu will be shown. (Default = true)")] 
 		public bool Menu { get; set; } = true;
+
+        [Option("reload-before-status", Default = false, HelpText = "Indicates if repositories will be reloaded before any status action. (Default = false)")]
+        public bool ReloadBeforeStatus { get; set; }
 	}
 }

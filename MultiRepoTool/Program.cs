@@ -42,6 +42,8 @@ namespace MultiRepoTool
 
 		private static void WithParsed(Options options)
 		{
+            IoC.RegisterInstance(options);
+
 			if (string.IsNullOrEmpty(options.Path))
 				options.Path = Environment.CurrentDirectory;
 
