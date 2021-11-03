@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Extensions;
 using MultiRepoTool.Git;
@@ -11,11 +13,13 @@ namespace MultiRepoTool.MenuItems
     public class OpenInGitKraken : MenuItem
     {
         public IEnumerable<GitRepository> Repositories { get; }
+        public Options Options { get; }
 
-        public OpenInGitKraken(IEnumerable<GitRepository> repositories)
+        public OpenInGitKraken(IEnumerable<GitRepository> repositories, Options options)
             : base("Open in GitKraken")
         {
             Repositories = repositories;
+            Options = options;
         }
 
         public override bool Execute(Menu menu)
@@ -44,6 +48,13 @@ namespace MultiRepoTool.MenuItems
                 .ToList();
             var opened = 0;
 
+            Action? delay = null;
+            if (Options.DelayOpenInGitKraken > 0)
+            {
+                var d = (int) Math.Min(10000, Options.DelayOpenInGitKraken);
+                delay = () => Task.Delay(d).Wait();
+            }
+
             foreach (var repository in Repositories)
             {
                 if (filters.Count > 0 && filters.All(x => !x.Matched(repository.Name)))
@@ -53,6 +64,7 @@ namespace MultiRepoTool.MenuItems
                 ConsoleUtils.WriteLine(repository.Name, Constants.ColorRepository);
                 opened++;
                 repository.OpenInGitKraken();
+                delay?.Invoke();
             }
 
             ConsoleUtils.Write("Opened in GitKraken: ");

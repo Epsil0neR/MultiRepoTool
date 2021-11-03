@@ -24,5 +24,8 @@ namespace MultiRepoTool
 
         [Option("reload-before-status", Default = false, HelpText = "Indicates if repositories will be reloaded before any status action. (Default = false)")]
         public bool ReloadBeforeStatus { get; set; }
+
+        [Option("delay-open-gk", Default = 0, HelpText = "Delay between opening repository in GitKraken. Max value is 10000.")]
+        public uint DelayOpenInGitKraken { get; set; }
 	}
 }
