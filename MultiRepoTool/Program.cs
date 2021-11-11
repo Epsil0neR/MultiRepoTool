@@ -113,12 +113,6 @@ namespace MultiRepoTool
 				return true;
 			}
 
-			if (options.OpenInGitKraken)
-			{
-				menu.Items.OfType<MenuItems.OpenInGitKraken>().FirstOrDefault()?.Exec(options.Search, true);
-				return true;
-			}
-
 			if (!string.IsNullOrWhiteSpace(options.Search))
 			{
 				menu.Items.OfType<MenuItems.Search>().FirstOrDefault()?.Exec(options.Search, true);

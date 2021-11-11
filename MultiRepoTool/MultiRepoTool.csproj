@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
-    <Version>2.6.4</Version>
+    <Version>2.7.0</Version>
     <AssemblyVersion>$(Version)</AssemblyVersion>
     <AssemblyFileVersion>$(Version)</AssemblyFileVersion>
   </PropertyGroup>
@@ -15,8 +15,10 @@
 
   <PropertyGroup>
     <ReleaseNotes>
+      v2.7.0:
+      - Remove run option "gk" - open all repositories in GitKraken.
       v2.6.4:
-      - Add option --delay-open-gk that will add extra delay between repositories being opened in GitKraken. Value means milliseconds. Default value = 0. Min = 0, Max = 10000. 
+      - Add option --delay-open-gk that will add extra delay between repositories being opened in GitKraken. Value means milliseconds. Default value = 0. Min = 0, Max = 10000.
       v2.6.3:
       - Add option --reload-before-status with default value false. Indicates if repositories will be reloaded before any status action.
       v2.6.2:
