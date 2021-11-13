@@ -63,7 +63,7 @@ namespace MultiRepoTool.MenuItems
 
 		private static ConsoleColor GetColor(string line)
 		{
-			if (line.EndsWith(".csproj") || line.EndsWith(".sln"))   
+            if (line.IsProjectRelatedFile())
 				return ConsoleColor.Blue;
 
 			return ConsoleColor.White;

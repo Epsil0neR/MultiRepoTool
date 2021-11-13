@@ -69,6 +69,7 @@ namespace MultiRepoTool
                 .ToList();
 
 			IoC.RegisterInstance<IEnumerable<GitRepository>>(repositories);
+			IoC.RegisterInstance<IReadOnlyList<GitRepository>>(repositories);
 
 			var menuItems = new List<MenuItem>
 			{
@@ -85,6 +86,7 @@ namespace MultiRepoTool
 				IoC.Resolve<MenuItems.EndActionsSeparator>(),
 				IoC.Resolve<MenuItems.ClearConsole>(),
 				IoC.Resolve<MenuItems.Exit>(),
+                new MenuItem("TEST", Test),
 			}
                 .Where(x=>x is not null)
                 .ToList();
@@ -104,6 +106,13 @@ namespace MultiRepoTool
 			Console.Write("Press any key to exit...");
 			Console.ReadKey(false);
 		}
+
+        private static bool Test()
+        {
+            var r = IoC.Resolve<IReadOnlyList<GitRepository>>();
+            GitStatus.FromString(r[0].ActiveBranch.Status);
+            return true;
+        }
 
 		private static bool RunFromOptions(Menu menu, Options options)
 		{

@@ -17,6 +17,8 @@
     <ReleaseNotes>
       v2.7.0:
       - Remove run option "gk" - open all repositories in GitKraken.
+      - Added status details code.
+      - Changed menu Open in GitKraken - now it provides sub-menu with 4 items: all, filter, behind or ahead, has not committed changes.
       v2.6.4:
       - Add option --delay-open-gk that will add extra delay between repositories being opened in GitKraken. Value means milliseconds. Default value = 0. Min = 0, Max = 10000.
       v2.6.3:
