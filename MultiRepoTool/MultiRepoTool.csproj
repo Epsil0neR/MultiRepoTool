@@ -16,6 +16,10 @@
 
   <PropertyGroup>
     <ReleaseNotes>
+      v2.7.1:
+      - Set icon.
+      - Remove test menu item.
+      - Fix issue with Open in GitKraken with multiline text for repositories with changes.
       v2.7.0:
       - Remove run option "gk" - open all repositories in GitKraken.
       - Added status details code.
