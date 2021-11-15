@@ -123,7 +123,7 @@ namespace MultiRepoTool.MenuItems
                 var a = status.Items.Count;
                 if (p > 0 && p == a)
                     rv = $"{rv}\n- Special: {p:00}";
-                if (p > 0)
+                else if (p > 0)
                     rv = $"{rv}\n- All: {a:00}. Special: {p:00}";
                 else if (a > 0)
                     rv = $"{rv}\n- All: {a:00}";
