@@ -82,7 +82,7 @@ namespace MultiRepoTool.ConsoleMenu
                         else
                         {
                             var filter = char.ToLowerInvariant(symbol.Value).ToString();
-                            Selected = list.FirstOrDefault(x => x.Title.StartsWith(filter, StringComparison.InvariantCultureIgnoreCase)) ?? Selected;
+                            Selected = list.FirstOrDefault(x => x.MatchesFilter(filter)) ?? Selected;
                         }
 
                         break;
@@ -114,7 +114,7 @@ namespace MultiRepoTool.ConsoleMenu
                         else
                         {
                             var filter = char.ToLowerInvariant(symbol.Value).ToString();
-                            Selected = list.FirstOrDefault(x => x.Title.StartsWith(filter, StringComparison.InvariantCultureIgnoreCase)) ?? Selected;
+                            Selected = list.FirstOrDefault(x => x.MatchesFilter(filter)) ?? Selected;
                         }
 
                         break;
@@ -160,7 +160,6 @@ namespace MultiRepoTool.ConsoleMenu
                 do
                 {
                     var input = Console.ReadKey(true);
-
                     switch (input.Key)
                     {
                         case ConsoleKey.UpArrow:

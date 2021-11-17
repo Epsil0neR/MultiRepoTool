@@ -100,6 +100,20 @@ namespace MultiRepoTool.ConsoleMenu
                 Console.WriteLine();
             }
         }
+
+        public bool MatchesFilter(string filter)
+        {
+            if (Title is not null)
+                return Title.StartsWith(filter, StringComparison.InvariantCultureIgnoreCase);
+
+            if (ColoredTitle?.Any() == true)
+            {
+                var title = string.Join(null, ColoredTitle.Select(x => x.Text));
+                return title.StartsWith(filter, StringComparison.InvariantCultureIgnoreCase);
+            }
+
+            return false;
+        }
     }
 
     public struct ColoredTextPart
