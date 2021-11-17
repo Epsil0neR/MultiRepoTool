@@ -11,7 +11,7 @@ namespace MultiRepoTool.MenuItems
 {
     public class OpenInGitKraken : MenuItem
     {
-        private readonly Action? _delay;
+        private readonly Action _delay;
         private uint _counter;
         public IEnumerable<GitRepository> Repositories { get; }
         public Options Options { get; }
@@ -97,6 +97,10 @@ namespace MultiRepoTool.MenuItems
 
         private bool ExecuteWithDesync()
         {
+            if (Options.ReloadBeforeStatus)
+                foreach (var repository in Repositories)
+                    repository.Reload();
+
             var repositories = Repositories
                 .Where(x => x.ActiveBranch is not null && (x.ActiveBranch.Ahead > 0 || x.ActiveBranch.Behind > 0))
                 .ToList();
@@ -106,38 +110,76 @@ namespace MultiRepoTool.MenuItems
 
         private bool ExecuteWithStatus()
         {
+            if (Options.ReloadBeforeStatus)
+                foreach (var repository in Repositories)
+                    repository.Reload();
+
             var repositories = Repositories
                 .Where(x => !string.IsNullOrWhiteSpace(x.ActiveBranch?.Status))
                 .ToList();
-            RunSubMenu(repositories, TitleForStatus);
+            RunSubMenu(repositories, ColoredTitleForStatus);
             return false;
         }
 
-        private string TitleForStatus(GitRepository repository)
+        public MenuItem ColoredTitleForStatus(GitRepository repository, Func<bool> func)
         {
-            var status = GitStatus.FromString(repository.ActiveBranch?.Status);
-            var rv = $"{repository.Name} - {repository.ActiveBranch?.Local}";
-            if (status is not null)
+            var rv = new List<ColoredTextPart>()
             {
-                var p = status.Items.Count(x => x.Path.IsProjectRelatedFile());
-                var a = status.Items.Count;
-                if (p > 0 && p == a)
-                    rv = $"{rv}\n- Special: {p:00}";
-                else if (p > 0)
-                    rv = $"{rv}\n- All: {a:00}. Special: {p:00}";
-                else if (a > 0)
-                    rv = $"{rv}\n- All: {a:00}";
+                new(repository.Name, Constants.ColorRepository),
+            };
+            var b = repository.ActiveBranch;
+            if (b is not null)
+            {
+                rv.Add(new(" - "));
+                if (b.HasLocal())
+                    rv.Add(new(b.Local, Constants.ColorBranchLocal));
+                else
+                    rv.Add(new(b.Remote, Constants.ColorBranchRemote));
+            }
+            var status = GitStatus.FromString(repository.ActiveBranch?.Status);
+            if (status is null)
+                return new MenuItem(rv, func);
+
+            var p = status.Items.Count(x => x.Path.IsProjectRelatedFile());
+            var a = status.Items.Count;
+            if (p > 0 && p == a)
+            {
+                rv.Add(new(" - "));
+                rv.Add(new($"Special: {p:D2}", ConsoleColor.Blue));
+            }
+            else if (p > 0)
+            {
+                rv.Add(new(" - "));
+                rv.Add(new($"All: {a:D2}", ConsoleColor.Red));
+                rv.Add(new(" - "));
+                rv.Add(new($"Special: {p:D2}", ConsoleColor.Blue));
+            }
+            else if (a > 0)
+            {
+                rv.Add(new(" - "));
+                rv.Add(new($"All: {a:D2}", ConsoleColor.Red));
             }
 
-            return rv;
+            return new MenuItem(rv, func);
         }
 
-        private string TitleForDesync(GitRepository repository)
+        private MenuItem TitleForDesync(GitRepository repository, Func<bool> func)
         {
-            return $"{repository.Name}\n- {repository.ActiveBranch?.GetNameWithTrackingInfo()}";
+            var title = new List<ColoredTextPart>()
+            {
+                new(repository.Name, Constants.ColorRepository),
+            };
+            var b = repository.ActiveBranch;
+            if (b is not null)
+            {
+                title.Add(new(" - "));
+                title.Add(new(b.GetNameWithTrackingInfo(), Constants.ColorBranchLocal));
+            }
+
+            return new MenuItem(title, func);
         }
 
-        private void RunSubMenu(IReadOnlyList<GitRepository> repositories, Func<GitRepository, string> titleResolver)
+        private void RunSubMenu(IReadOnlyList<GitRepository> repositories, Func<GitRepository, Func<bool>, MenuItem> menuItemResolver)
         {
             bool OpenAll()
             {
@@ -159,8 +201,7 @@ namespace MultiRepoTool.MenuItems
                     return true;
                 }
 
-                var title = titleResolver(repository);
-                var mi = new MenuItem(title, Open);
+                var mi = menuItemResolver(repository, Open);
                 menus.Add(mi);
             }
             if (repositories.Count > 0)

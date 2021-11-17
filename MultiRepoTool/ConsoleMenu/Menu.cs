@@ -146,14 +146,7 @@ namespace MultiRepoTool.ConsoleMenu
         private void PrintMenuItem(MenuItem item)
         {
             var isSelected = ReferenceEquals(Selected, item);
-            var fore = isSelected ? Console.BackgroundColor : Console.ForegroundColor;
-            var back = isSelected ? Console.ForegroundColor : Console.BackgroundColor;
-            var lines = item.Title.Split('\n');
-            foreach (var line in lines)
-            {
-                ConsoleUtils.Write("  ");
-                ConsoleUtils.WriteLine(line, fore, back);
-            }
+            item.WriteTitle(isSelected, "  ");
         }
 
         private static MenuNavigation ReadMenuNavigation(out char? symbol)
