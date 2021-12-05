@@ -32,6 +32,7 @@ namespace MultiRepoTool.MenuItems
 
         public override bool Execute(Menu menu)
         {
+            _counter = 0;
             Console.WriteLine($"Executing {Title}.");
 
             var items = new List<MenuItem>()
