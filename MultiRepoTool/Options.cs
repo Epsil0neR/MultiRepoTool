@@ -24,5 +24,8 @@ namespace MultiRepoTool
 
         [Option("delay-open-gk", Default = 0, HelpText = "Delay between opening repository in GitKraken. Max value is 10000.")]
         public uint DelayOpenInGitKraken { get; set; }
-	}
+
+        [Option('u', "user-menus", Default = "Custom", HelpText = "Sub-directory name in executable directory where locates custom menu items as executable files. Supported formats: .cmd, .exe, .bat, .lnk (runs in default shell).")]
+        public string UserMenuItemsFolder { get; set; }
+    }
 }

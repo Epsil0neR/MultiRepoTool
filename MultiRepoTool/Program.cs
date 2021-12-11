@@ -70,7 +70,7 @@ namespace MultiRepoTool
 
 			IoC.RegisterInstance<IEnumerable<GitRepository>>(repositories);
 			IoC.RegisterInstance<IReadOnlyList<GitRepository>>(repositories);
-
+            var custom = IoC.Resolve<UserItems>();
 			var menuItems = new List<MenuItem>
 			{
 				IoC.Resolve<MenuItems.Reload>(),
@@ -84,11 +84,18 @@ namespace MultiRepoTool
 				IoC.Resolve<MenuItems.CheckDiffs>(),
 				IoC.Resolve<MenuItems.CleanFolders>(),
 				IoC.Resolve<MenuItems.EndActionsSeparator>(),
-				IoC.Resolve<MenuItems.ClearConsole>(),
-				IoC.Resolve<MenuItems.Exit>(),
-			}
+            }
                 .Where(x=>x is not null)
                 .ToList();
+
+            if (custom.MenuItems.Count > 0)
+            {
+                menuItems.AddRange(custom.MenuItems);
+                menuItems.Add(IoC.Resolve<MenuItems.EndActionsSeparator>());
+            }
+
+            menuItems.Add(IoC.Resolve<MenuItems.ClearConsole>());
+            menuItems.Add(IoC.Resolve<MenuItems.Exit>());
 
 			var menu = new Menu(menuItems)
 			{
