@@ -169,7 +169,7 @@ namespace MultiRepoTool.ConsoleMenu
                         case ConsoleKey.Enter:
                             return MenuNavigation.Execute;
                         default:
-                            if (char.IsLetter(input.KeyChar))
+                            if (char.IsLetter(input.KeyChar) || char.IsDigit(input.KeyChar))
                             {
                                 symbol = input.KeyChar;
 
