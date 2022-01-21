@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Extensions;
 using MultiRepoTool.Git;
@@ -194,6 +195,7 @@ namespace MultiRepoTool.MenuItems
                 new("All", OpenAll),
                 new EndActionsSeparator()
             };
+            var itemsWithCodeChanges = new List<MenuItem>();
             foreach (var repository in repositories)
             {
                 bool Open()
@@ -204,10 +206,28 @@ namespace MultiRepoTool.MenuItems
 
                 var mi = menuItemResolver(repository, Open);
                 menus.Add(mi);
+
+                if (mi.ColoredTitle?.Any(x=>x.Foreground == ConsoleColor.Red) == true)
+                    itemsWithCodeChanges.Add(mi);
             }
             if (repositories.Count > 0)
                 menus.Add(new EndActionsSeparator());
             menus.Add(new Exit("Done"));
+
+            if (itemsWithCodeChanges.Count > 0)
+            {
+                var mi = new MenuItem("All with code changes", menu =>
+                {
+                    foreach (var item in itemsWithCodeChanges)
+                    {
+                        item.Execute(menu);
+                    }
+
+                    return false;
+                });
+                menus.Insert(1, mi);
+            }
+
             var menu = new Menu(menus)
             {
                 LoopNavigation = true,
