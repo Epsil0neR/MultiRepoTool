@@ -2,7 +2,7 @@
   "profiles": {
     "PublishedZipper": {
       "commandName": "Project",
-      "commandLineArgs": "--path=\"C:\\Projects\\_git\\Epsil0neR\\MultiRepoTool\\MultiRepoTool\\bin\\Release\\net5.0\\publish\" --output=\"C:\\Projects\\_git\\Epsil0neR\\MultiRepoTool\\MultiRepoTool\\bin\\Release\" --exe=\"MultiRepoTool.exe\" --exclude=\".zip,.pdb\""
+      "commandLineArgs": "--path=\"C:\\Projects\\_git\\Epsil0neR\\MultiRepoTool\\MultiRepoTool\\bin\\Release\\net6.0\\publish\" --output=\"C:\\Projects\\_git\\Epsil0neR\\MultiRepoTool\\MultiRepoTool\\bin\\Release\" --exe=\"MultiRepoTool.exe\" --exclude=\".zip,.pdb\""
     }
   }
 }
