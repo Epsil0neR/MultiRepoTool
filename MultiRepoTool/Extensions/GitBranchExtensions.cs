@@ -29,7 +29,7 @@ namespace MultiRepoTool.Extensions
 			if (branch == null)
 				throw new ArgumentNullException(nameof(branch));
 
-			return !string.IsNullOrEmpty(branch.Remote);
+			return !string.IsNullOrEmpty(branch.RemoteBranch);
 		}
 
 		/// <summary>
@@ -57,7 +57,7 @@ namespace MultiRepoTool.Extensions
 			if (branch == null)
 				return string.Empty;
 
-			var name = branch.HasLocal() ? branch.Local : branch.Remote;
+			var name = branch.HasLocal() ? branch.Local : branch.RemoteBranch;
 			if (branch.Behind == 0 && branch.Ahead == 0) return name;
 			var sb = new StringBuilder();
 			sb.Append(name);

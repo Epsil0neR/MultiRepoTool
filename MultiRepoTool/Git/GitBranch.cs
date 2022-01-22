@@ -20,7 +20,12 @@
 		/// <summary>
 		/// Branch name from remote.
 		/// </summary>
-		public string Remote { get; init; }
+		public string RemoteBranch { get; init; }
+
+        /// <summary>
+        /// Server name.
+        /// </summary>
+        public string Remote { get; set; }
 
 		/// <summary>
 		/// Number of commits on the base branch that do not exist on this branch.
@@ -45,7 +50,7 @@
 		/// <inheritdoc />
 		public override string ToString()
 		{
-			return $"L:{Local} - A:{Ahead}-B:{Behind} - R:{Remote}";
+			return $"L:{Local} - A:{Ahead}-B:{Behind} - R:{RemoteBranch}";
 		}
 	}
 }

@@ -16,7 +16,7 @@ namespace MultiRepoTool.Extensions
             {
                 var name = branch.HasLocal()
                     ? branch.Local
-                    : branch.Remote;
+                    : branch.RemoteBranch;
 
                 if (branch.IsActive && includeActive)
                     yield return branch;
@@ -39,7 +39,7 @@ namespace MultiRepoTool.Extensions
             {
                 var name = branch.HasLocal()
                     ? branch.Local
-                    : branch.Remote;
+                    : branch.RemoteBranch;
 
                 if (branch.IsActive && includeActive)
                     yield return branch;
@@ -54,7 +54,7 @@ namespace MultiRepoTool.Extensions
         {
             foreach (var branch in repository.Branches)
             {
-                var name = branch.HasLocal() ? branch.Local : branch.Remote;
+                var name = branch.HasLocal() ? branch.Local : branch.RemoteBranch;
                 if (branch.IsActive && includeActive)
                     yield return branch;
 

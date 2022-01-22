@@ -41,7 +41,7 @@ namespace MultiRepoTool.MenuItems
 				ConsoleUtils.SetCursorLeft(longestNameLength + 8);
 				ConsoleUtils.Write($" {branch.GetNameWithTrackingInfo()}", Constants.ColorBranchLocal);
 				ConsoleUtils.Write("...");
-				ConsoleUtils.Write(branch.Remote, Constants.ColorBranchRemote);
+				ConsoleUtils.Write(branch.RemoteBranch, Constants.ColorBranchRemote);
 				ConsoleUtils.WriteLine();
 				PrintStatus(branch.Status);
 				ConsoleUtils.WriteLine();

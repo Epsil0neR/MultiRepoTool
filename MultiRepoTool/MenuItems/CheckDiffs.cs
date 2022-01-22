@@ -49,8 +49,8 @@ namespace MultiRepoTool.MenuItems
 				if (r == null)
 					continue;
 
-				var lName = l.Value.local ? l.Value.branch.Local : l.Value.branch.Remote;
-				var rName = r.Value.local ? r.Value.branch.Local : r.Value.branch.Remote;
+				var lName = l.Value.local ? l.Value.branch.Local : l.Value.branch.RemoteBranch;
+				var rName = r.Value.local ? r.Value.branch.Local : r.Value.branch.RemoteBranch;
 
 				ConsoleUtils.Write("Left branch: ");
 				ConsoleUtils.WriteLine(lName, Constants.ColorBranchLocal);
@@ -84,7 +84,7 @@ namespace MultiRepoTool.MenuItems
 			items.AddRange(
 				repository.Branches
 					.Where(x => x.HasRemote() && !ReferenceEquals(toSkip, x))
-					.Select(x => new MenuItem(x.Remote, _ =>
+					.Select(x => new MenuItem(x.RemoteBranch, _ =>
 					{
 						rv = (x, false);
 						return false;

@@ -155,7 +155,7 @@ namespace MultiRepoTool.Git
 				var branch = new GitBranch(this)
 				{
 					Local = local,
-					Remote = remote,
+					RemoteBranch = remote,
 					Ahead = GetValueFromTrack(track, "ahead "),
 					Behind = GetValueFromTrack(track, "behind "),
 				};
@@ -181,7 +181,7 @@ namespace MultiRepoTool.Git
 			{
 				var branch = new GitBranch(this)
 				{
-					Remote = remote
+					RemoteBranch = remote
 				};
 				yield return branch;
 			}
@@ -225,7 +225,7 @@ namespace MultiRepoTool.Git
 			{
 				// 1. Find old branch that matches by Local or by Remote:
 				var oldLocal = _branches.FirstOrDefault(x => x.HasLocal() && x.Local == branch.Local);
-				var oldRemote = _branches.FirstOrDefault(x => x.HasRemote() && x.Remote == branch.Remote);
+				var oldRemote = _branches.FirstOrDefault(x => x.HasRemote() && x.RemoteBranch == branch.RemoteBranch);
 
 				// 2. Remove old remote in case local and remote now are the same branch.
 				if (oldRemote != null && oldLocal != null && !ReferenceEquals(oldRemote, oldLocal))

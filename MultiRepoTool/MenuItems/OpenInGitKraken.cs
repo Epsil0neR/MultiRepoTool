@@ -136,7 +136,7 @@ namespace MultiRepoTool.MenuItems
                 if (b.HasLocal())
                     rv.Add(new(b.Local, Constants.ColorBranchLocal));
                 else
-                    rv.Add(new(b.Remote, Constants.ColorBranchRemote));
+                    rv.Add(new(b.RemoteBranch, Constants.ColorBranchRemote));
             }
             var status = GitStatus.FromString(repository.ActiveBranch?.Status);
             if (status is null)
