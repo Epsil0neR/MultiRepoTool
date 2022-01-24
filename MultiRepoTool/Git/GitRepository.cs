@@ -11,7 +11,7 @@ namespace MultiRepoTool.Git
 	{
 		public const string GitSubFolder = ".git";
 		public const string CommandPull = "git pull";
-		public const string CommandFetch = "git fetch --quiet";
+		public const string CommandFetch = "git fetch -all- --quiet";
 		public const string CommandPush = "git push";
 		public const string CommandBranchStatus = "git status -sb";
 		public const string CommandListBranchesLocal = "git branch -l";
@@ -149,13 +149,14 @@ namespace MultiRepoTool.Git
 			{
 				var data = localData.Split(';');
 				var local = data[0];
-				var remote = data[1];
+				var remoteBranch = data[1];
 				var track = data[2];
-
+                var remote = string.IsNullOrEmpty(remoteBranch) ? string.Empty : remoteBranch.Split("/")[0];
 				var branch = new GitBranch(this)
 				{
 					Local = local,
-					RemoteBranch = remote,
+					RemoteBranch = remoteBranch,
+                    Remote = remote,
 					Ahead = GetValueFromTrack(track, "ahead "),
 					Behind = GetValueFromTrack(track, "behind "),
 				};
@@ -173,7 +174,7 @@ namespace MultiRepoTool.Git
 					ActiveBranch = branch;
 				}
 
-				remotes.Remove(remote);
+				remotes.Remove(remoteBranch);
 				yield return branch;
 			}
 
@@ -225,7 +226,7 @@ namespace MultiRepoTool.Git
 			{
 				// 1. Find old branch that matches by Local or by Remote:
 				var oldLocal = _branches.FirstOrDefault(x => x.HasLocal() && x.Local == branch.Local);
-				var oldRemote = _branches.FirstOrDefault(x => x.HasRemote() && x.RemoteBranch == branch.RemoteBranch);
+				var oldRemote = _branches.FirstOrDefault(x => x.HasRemoteBranch() && x.RemoteBranch == branch.RemoteBranch);
 
 				// 2. Remove old remote in case local and remote now are the same branch.
 				if (oldRemote != null && oldLocal != null && !ReferenceEquals(oldRemote, oldLocal))

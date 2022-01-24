@@ -25,7 +25,7 @@
         /// <summary>
         /// Server name.
         /// </summary>
-        public string Remote { get; set; }
+        public string Remote { get; init; }
 
 		/// <summary>
 		/// Number of commits on the base branch that do not exist on this branch.

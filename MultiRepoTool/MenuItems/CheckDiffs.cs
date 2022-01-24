@@ -83,7 +83,7 @@ namespace MultiRepoTool.MenuItems
 					}));
 			items.AddRange(
 				repository.Branches
-					.Where(x => x.HasRemote() && !ReferenceEquals(toSkip, x))
+					.Where(x => x.HasRemoteBranch() && !ReferenceEquals(toSkip, x))
 					.Select(x => new MenuItem(x.RemoteBranch, _ =>
 					{
 						rv = (x, false);
