@@ -43,6 +43,7 @@ namespace MultiRepoTool.MenuItems
                 new("Behind or ahead", ExecuteWithDesync),
                 new("Not committed changed", ExecuteWithStatus)
             };
+            items.AddRange(CreateRootMenuItems(Repositories));
             var subMenu = new Menu(items)
             {
                 LoopNavigation = true,
@@ -55,6 +56,32 @@ namespace MultiRepoTool.MenuItems
             ConsoleUtils.WriteLine(_counter.ToString(), _counter == 0 ? ConsoleColor.Red : ConsoleColor.Green);
 
             return true;
+        }
+
+        private IEnumerable<MenuItem> CreateRootMenuItems(IEnumerable<GitRepository> repositories)
+        {
+            yield return new EndActionsSeparator();
+            foreach (var repo in repositories)
+            {
+                var title = new List<ColoredTextPart>()
+                {
+                    new(repo.Name, Constants.ColorRepository)
+                };
+                var b = repo.ActiveBranch;
+                if (b is not null)
+                {
+                    title.Add(new(" - "));
+                    title.Add(new(b.GetNameWithTrackingInfo(), Constants.ColorBranchLocal));
+                }
+
+                yield return new MenuItem(title, () =>
+                {
+                    Open(repo);
+                    return true;
+                });
+            }
+            yield return new EndActionsSeparator();
+            yield return new Exit("Done");
         }
 
         public bool ExecuteAll()
