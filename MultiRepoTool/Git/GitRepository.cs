@@ -129,7 +129,6 @@ namespace MultiRepoTool.Git
 
 			var currentBranch = Executor.Execute("Current branch", GitConst.CommandCurrentBranch)
 				.Trim('\r', '\n', ' ');
-			var localBranchesOutput = Executor.Execute("Local branches", GitConst.CommandListBranchesLocal);
 			var remoteBranchesOutput = Executor.Execute("Remote branches", GitConst.CommandListBranchesRemote);
 			List<string> ParseOutput(string output) =>
 				output
@@ -138,10 +137,9 @@ namespace MultiRepoTool.Git
 					.Where(x => !string.IsNullOrEmpty(x))
 					.ToList();
 
-			ParseOutput(localBranchesOutput);
 			var remotes = ParseOutput(remoteBranchesOutput);
 			var localsDataOutput = Executor.Execute("Locals to remotes with track",
-				"git for-each-ref --format=\"%(refname:short);%(upstream:short);%(push:track)\" refs/heads");
+				"git for-each-ref --format=\"%(refname:short);%(upstream:short);%(push:track);%(upstream:track)\" refs/heads");
 			// Command above, but without string escaping:
 			// git for-each-ref --format="%(refname:short);%(upstream:short);%(push:track)" refs/heads
 			var localsData = ParseOutput(localsDataOutput);
@@ -150,15 +148,16 @@ namespace MultiRepoTool.Git
 				var data = localData.Split(';');
 				var local = data[0];
 				var remoteBranch = data[1];
-				var track = data[2];
+                var trackPush = data[2];
+                var trackUpstream = data[3];
                 var remote = string.IsNullOrEmpty(remoteBranch) ? string.Empty : remoteBranch.Split("/")[0];
 				var branch = new GitBranch(this)
 				{
 					Local = local,
 					RemoteBranch = remoteBranch,
                     Remote = remote,
-					Ahead = GetValueFromTrack(track, "ahead "),
-					Behind = GetValueFromTrack(track, "behind "),
+					Ahead = Math.Max(GetValueFromTrack(trackPush, "ahead "), GetValueFromTrack(trackUpstream, "ahead ")),
+					Behind = Math.Max(GetValueFromTrack(trackPush, "behind "), GetValueFromTrack(trackUpstream, "behind ")),
 				};
 
 				if (currentBranch == local)
