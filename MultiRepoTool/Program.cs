@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using MultiRepoTool.Profiles;
 
 namespace MultiRepoTool
 {
@@ -68,8 +69,12 @@ namespace MultiRepoTool
 				.Where(x => x != null)
                 .ToList();
 
-			IoC.RegisterInstance<IEnumerable<GitRepository>>(repositories);
-			IoC.RegisterInstance<IReadOnlyList<GitRepository>>(repositories);
+            IoC.Register(_ => new Profile(repositories));
+            IoC.RegisterSingleton(_ => new ProfilesManager(options, repositories));
+            
+            var profiles =  IoC.Resolve<ProfilesManager>();
+            profiles.Activate(options.Profile);
+
             var custom = IoC.Resolve<UserItems>();
 			var menuItems = new List<MenuItem>
 			{

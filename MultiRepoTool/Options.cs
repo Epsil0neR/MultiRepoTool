@@ -27,5 +27,11 @@ namespace MultiRepoTool
 
         [Option('u', "user-menus", Default = "Custom", HelpText = "Sub-directory name in executable directory where locates custom menu items as executable files. Supported formats: .cmd, .exe, .bat, .lnk (runs in default shell).")]
         public string UserMenuItemsFolder { get; set; }
+
+        [Option('r', "profiles", Default = "Profiles", HelpText = "Sub-directory name in executable directory where profiles with whitelist and/or blacklist of repository folders.")]
+        public string UserProfilesFolder { get; set; }
+
+        [Option("profile", Default = null, HelpText = "Profile to use on start-up.")]
+        public string Profile { get; set; }
     }
 }
