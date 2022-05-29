@@ -1,12 +1,22 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MultiRepoTool.Utils
 {
     public static class SharedUtils
     {
+        private static readonly Lazy<string> GitKrakenPath = new(GitKrakenPathFactory, LazyThreadSafetyMode.ExecutionAndPublication);
+
+        private static string GitKrakenPathFactory()
+        {
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var exePath = $"{localAppData}/gitkraken/update.exe";
+            return exePath;
+        }
+
         public static bool IsGitKrakenInstalled()
         {
             var exePath = GetGitKrakenPath();
@@ -15,14 +25,12 @@ namespace MultiRepoTool.Utils
 
         public static string GetGitKrakenPath()
         {
-            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var exePath = $"{localAppData}/gitkraken/update.exe";
-            return exePath;
+            return GitKrakenPath.Value;
         }
 
         public static Task OpenInGitKraken(string path)
         {
-            var exePath = SharedUtils.GetGitKrakenPath();
+            var exePath = GetGitKrakenPath();
             var param = "--processStart=gitkraken.exe --process-start-args=\"-p \\\"{0}\\\"\"";
 
             var process = new Process
@@ -66,7 +74,7 @@ namespace MultiRepoTool.Utils
             }
             else
             {
-                return System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+                return Process.GetCurrentProcess().MainModule.FileName;
             }
         }
     }
