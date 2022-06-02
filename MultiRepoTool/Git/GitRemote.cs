@@ -18,11 +18,11 @@ namespace MultiRepoTool.Git
 			Repository = repository;
 		}
 
-		public static GitRemote FromName(string name, GitRepository repository)
+		public static GitRemote? FromName(string name, GitRepository? repository)
 		{
 			if (string.IsNullOrEmpty(name))
 				return null;
-			if (repository == null)
+			if (repository is null)
 				return null;
 
 			var urlsPush = repository.Executor.Execute("List push urls", CommandPush(name));

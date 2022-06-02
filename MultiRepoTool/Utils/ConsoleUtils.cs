@@ -32,9 +32,9 @@ namespace MultiRepoTool.Utils
 			Console.BackgroundColor = back;
 		}
 
-		public static void WriteLine(string text = null, ConsoleColor? foreground = null, ConsoleColor? background = null)
+		public static void WriteLine(string? text = null, ConsoleColor? foreground = null, ConsoleColor? background = null)
 		{
-			if (text == null)
+			if (text is null)
 			{
 				Console.WriteLine();
 				return;
@@ -60,7 +60,7 @@ namespace MultiRepoTool.Utils
 			Console.BackgroundColor = back;
 		}
 
-		public static string ReadLine(ConsoleColor? foreground = null, ConsoleColor? background = null)
+		public static string? ReadLine(ConsoleColor? foreground = null, ConsoleColor? background = null)
 		{
 			var fore = Console.ForegroundColor;
 			var back = Console.BackgroundColor;

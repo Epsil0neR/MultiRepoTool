@@ -17,13 +17,13 @@ namespace MultiRepoTool.ConsoleMenu
         }
 
         public IReadOnlyList<MenuItem> Items { get; }
-        public MenuItem Selected { get; set; }
+        public MenuItem? Selected { get; set; }
 
         public int CurrentTop { get; private set; }
 
-        public bool LoopNavigation { get; set; } //TODO: Not used :(
+        public bool LoopNavigation { get; init; }
 
-        public bool PreventNewLineOnExecution { get; set; }
+        public bool PreventNewLineOnExecution { get; init; }
 
         public void Run(string menuText = "Select from menu using arrows up, down, Enter and first symbol of menu item:")
         {

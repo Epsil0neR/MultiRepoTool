@@ -9,10 +9,9 @@ namespace MultiRepoTool.Git
 
         private GitStatus()
         {
-
         }
 
-        public static GitStatus FromString(string status)
+        public static GitStatus? FromString(string status)
         {
             if (string.IsNullOrWhiteSpace(status))
                 return null;
@@ -24,7 +23,7 @@ namespace MultiRepoTool.Git
                 .Where(x => x is not null)
                 .ToList();
 
-            var rv = new GitStatus()
+            var rv = new GitStatus
             {
                 Items = statuses
             };
@@ -47,7 +46,7 @@ namespace MultiRepoTool.Git
         /// </summary>
         public string PathOld { get; init; }
 
-        public static GitStatusItem FromString(string statusLine)
+        public static GitStatusItem? FromString(string statusLine)
         {
             if (string.IsNullOrWhiteSpace(statusLine))
                 return null;
@@ -55,9 +54,11 @@ namespace MultiRepoTool.Git
             var code = statusLine.Substring(0, 2);
             var pathParts = statusLine.Substring(2);
             var parts = pathParts.Split(" -> ");
-            (string path, string pathOld) = parts.Length == 2 ? (parts[0], parts[1]) : (pathParts, null);
+            (string? path, string? pathOld) = parts.Length == 2 
+                ? (parts[0], parts[1]) 
+                : (pathParts, null);
 
-            var rv = new GitStatusItem()
+            var rv = new GitStatusItem
             {
                 Code = code,
                 Path = path,

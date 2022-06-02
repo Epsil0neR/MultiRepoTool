@@ -11,7 +11,7 @@ namespace MultiRepoTool.MenuItems
 {
     public class OpenInGitKraken : MenuItem
     {
-        private readonly Action _delay;
+        private readonly Action? _delay;
         private uint _counter;
         public IEnumerable<GitRepository> Repositories { get; }
         public Options Options { get; }

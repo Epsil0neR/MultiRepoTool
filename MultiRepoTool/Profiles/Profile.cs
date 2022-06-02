@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using MultiRepoTool.Git;
 
@@ -7,9 +8,11 @@ namespace MultiRepoTool.Profiles
     internal class Profile
     {
         private readonly IEnumerable<GitRepository> _repositories;
+        private readonly ProfilesManager _manager;
 
-        public Profile(IEnumerable<GitRepository> allRepositories)
+        public Profile(ProfilesManager manager, IEnumerable<GitRepository> allRepositories)
         {
+            _manager = manager ?? throw new ArgumentNullException(nameof(manager));
             _repositories = allRepositories;
         }
 
@@ -17,7 +20,7 @@ namespace MultiRepoTool.Profiles
         public string[] Blacklist { get; init; }
         public string[] Whitelist { get; init; }
 
-        public void Activate()
+        internal void Activate()
         {
             var result = _repositories.ToList();
             if (Blacklist is { Length: > 0 })

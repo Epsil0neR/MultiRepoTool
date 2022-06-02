@@ -24,7 +24,7 @@ namespace MultiRepoTool.Git
 	public class GitRepository
 	{
 		private readonly List<GitBranch> _branches = new();
-		private GitBranch _activeBranch;
+		private GitBranch? _activeBranch;
 
 		public CommandExecutor Executor { get; }
 
@@ -52,10 +52,11 @@ namespace MultiRepoTool.Git
         /// Gets GIT repository from <paramref name="directory"/> or null if directory is not a GIT repository.
         /// </summary>
         /// <param name="directory"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public static GitRepository FromDirectory(DirectoryInfo directory, string name = null)
+        public static GitRepository? FromDirectory(DirectoryInfo? directory, string? name = null)
         {
-			if (directory == null)
+			if (directory is null)
 				return null;
 
 			if (!directory.Exists)
@@ -68,7 +69,7 @@ namespace MultiRepoTool.Git
 			return new GitRepository(directory, name);
 		}
 
-		private GitRepository(DirectoryInfo directory, string name = null)
+		private GitRepository(DirectoryInfo directory, string? name = null)
 		{
             Directory = directory;
 			Executor = new CommandExecutor(directory);
@@ -82,7 +83,7 @@ namespace MultiRepoTool.Git
 
         public IReadOnlyList<GitBranch> Branches => _branches;
 
-		public GitBranch ActiveBranch
+		public GitBranch? ActiveBranch
 		{
 			get => _activeBranch;
 			private set
@@ -202,7 +203,7 @@ namespace MultiRepoTool.Git
 			foreach (var name in remoteNames)
 			{
 				var remote = GitRemote.FromName(name, this);
-				if (remote != null)
+				if (remote is not null)
 					yield return remote;
 			}
 		}
