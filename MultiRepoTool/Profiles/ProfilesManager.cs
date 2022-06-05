@@ -14,7 +14,7 @@ namespace MultiRepoTool.Profiles;
 //TODO: 1. Save profile to file once it created.
 //TODO: 2. Root menu item should be "Profile". It opens menu with: 1. Select profile. Active: <Profile.Name>. 2+. profile configuration. Last: Go back.
 //TODO: 3. Menu item to save current profile. Menu item: "Go Back" / "Save". Maybe add menu item "Discard changes"
-//TODO: 4. List mode toggle - Black list / White list.
+//TODO: [Done] 4. List mode toggle - Black list / White list.
 //TODO: 5. Select repos for list. List should be similar to "Open in GitKraken" menu.
 //TODO: 6. Select menu items to hide. Like "Pull", "Search", "Status short", etc items from root. NOTE: Some menu items should be always visible. Like "Profile", "Exit"
 //TODO: 7. ??? Add support for different repositories location??? - Just idea for now, check all pros and cons.

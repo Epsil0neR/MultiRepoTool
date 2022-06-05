@@ -5,6 +5,21 @@ using MultiRepoTool.Git;
 
 namespace MultiRepoTool.Profiles
 {
+    /// <summary>
+    /// Indicates how list will be threaten - as <see cref="White"/> or as <see cref="Black"/>.
+    /// </summary>
+    public enum ListMode {
+        /// <summary>
+        /// Items selected by user will not be available in other places.
+        /// </summary>
+        Black,
+        
+        /// <summary>
+        /// Only selected by user items will be available in other places.
+        /// </summary>
+        White    
+    }
+
     internal class Profile
     {
         private readonly IEnumerable<GitRepository> _repositories;
@@ -17,22 +32,29 @@ namespace MultiRepoTool.Profiles
         }
 
         public string Name { get; init; }
-        public string[] Blacklist { get; init; }
-        public string[] Whitelist { get; init; }
+
+        /// <summary>
+        /// Indicates if repositories specified in <see cref="Repositories"/> should be threaten as black list or as white list.
+        /// Default: black list. 
+        /// </summary>
+        public ListMode RepositoriesMode { get; init; } = ListMode.Black;
+        
+        public string[] Repositories { get; init; }
 
         internal void Activate()
         {
             var result = _repositories.ToList();
-            if (Blacklist is { Length: > 0 })
+            switch (RepositoriesMode)
             {
-                var toRemove = result.Where(x => Blacklist.Contains(x.Name)).ToList();
-                if (toRemove.Count > 0)
-                    result.RemoveAll(toRemove.Contains);
-            }
-
-            if (Whitelist is { Length: > 0 })
-            {
-                result.RemoveAll(x => !Whitelist.Contains(x.Name));
+                case ListMode.White:
+                    result.RemoveAll(x => !Repositories.Contains(x.Name));
+                    break;
+                case ListMode.Black:
+                default:
+                    var toRemove = result.Where(x => Repositories.Contains(x.Name)).ToList();
+                    if (toRemove.Count > 0)
+                        result.RemoveAll(toRemove.Contains);
+                    break;
             }
 
             IoC.RegisterInstance<IEnumerable<GitRepository>>(result);
