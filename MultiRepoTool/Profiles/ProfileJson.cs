@@ -2,6 +2,6 @@
 
 internal class ProfileJson
 {
-    public string[]? Blacklist { get; init; }
-    public string[]? Whitelist { get; init; }
+    public ListMode RepositoriesMode { get; init; }
+    public string[]? Repositories { get; init; }
 }

@@ -60,8 +60,8 @@ internal class ProfilesManager : List<Profile>
                 var profile = new Profile(this, allRepositories)
                 {
                     Name = Path.GetFileNameWithoutExtension(info.Name),
-                    Blacklist = data?.Blacklist,
-                    Whitelist = data?.Whitelist,
+                    RepositoriesMode = data?.RepositoriesMode ?? ListMode.Black,
+                    Repositories = data?.Repositories ?? new string[0],
                 };
                 Add(profile);
 
