@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
@@ -13,7 +13,7 @@ using MultiRepoTool.Utils;
 
 namespace MultiRepoTool.Profiles;
 
-//TODO: 1. Save profile to file once it created.
+//TODO: [Done] 1. Save profile to file once it created.
 //TODO: 2. Root menu item should be "Profile". It opens menu with: 1. Select profile. Active: <Profile.Name>. 2+. profile configuration. Last: Go back.
 //TODO: 3. Menu item to save current profile. Menu item: "Go Back" / "Save". Maybe add menu item "Discard changes"
 //TODO: [Done] 4. List mode toggle - Black list / White list.
@@ -50,7 +50,6 @@ internal class ProfilesManager : List<Profile>
     {
         Options = options;
         _repositoriesManager = repositoriesManager;
-        
 
         var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
         var directory = Path.Combine(rootDirectory, options.UserProfilesFolder);
@@ -82,14 +81,14 @@ internal class ProfilesManager : List<Profile>
                 Name = DefaultProfileName
             };
             Insert(0, Default);
-            _ = Save(Default);
+            Save(Default);
         }
 
         if (!Activate(options.Profile))
             Current = Default;
     }
 
-    public async Task Save(Profile profile, CancellationToken token = default)
+    public void Save(Profile profile)
     {
         if (profile is null)
             throw new ArgumentNullException(nameof(profile));
@@ -101,7 +100,11 @@ internal class ProfilesManager : List<Profile>
         var dto = profile.ToDto();
         var options = new JsonSerializerOptions
         {
-            WriteIndented = true
+            WriteIndented = true,
+            Converters =
+            {
+                new JsonStringEnumConverter()
+            }
         };
         var json = JsonSerializer.Serialize(dto, options);
         var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
@@ -109,7 +112,7 @@ internal class ProfilesManager : List<Profile>
         var path = Path.Combine(directory, $"{name}.profile");
 
         Directory.CreateDirectory(directory);
-        await File.WriteAllTextAsync(path, json, Encoding.UTF8, token);
+        File.WriteAllText(path, json, Encoding.UTF8);
     }
 
 
@@ -194,8 +197,8 @@ internal class ProfilesManager : List<Profile>
             Name = name
         };
         Add(rv);
-        Current = rv;
         Save(rv);
+        Current = rv;
         return false;
     }
 
