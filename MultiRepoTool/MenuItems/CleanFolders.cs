@@ -6,85 +6,84 @@ using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
 
-namespace MultiRepoTool.MenuItems
+namespace MultiRepoTool.MenuItems;
+
+public class CleanFolders : MenuItem
 {
-    public class CleanFolders : MenuItem
+    public GitRepositoriesManager Manager { get; }
+
+    public CleanFolders(GitRepositoriesManager manager)
+        : base("Clean-up folders")
     {
-        public IEnumerable<GitRepository> Repositories { get; }
+        Manager = manager;
+    }
 
-        public CleanFolders(IEnumerable<GitRepository> repositories)
-            : base("Clean-up folders")
-        {
-            Repositories = repositories;
-        }
+    public override bool Execute(Menu menu)
+    {
+        Console.WriteLine($"Executing {Title}.");
 
-        public override bool Execute(Menu menu)
-        {
-            Console.WriteLine($"Executing {Title}.");
-
-            var filters = RunSubMenu();
-            if (!filters.Any())
-                return true;
-
-            foreach (var repository in Repositories)
-            {
-                ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Cleaning ");
-                ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
-                try
-                {
-                    var dir = repository.Executor.WorkingDirectory;
-                    var allDirs = dir.GetDirectories("*", SearchOption.AllDirectories);
-                    var filtered = allDirs
-                        .Where(x => filters.Contains(x.Name))
-                        .ToList();
-                    foreach (var directory in filtered)
-                    {
-                        try
-                        {
-                            directory.Delete(true);
-                        }
-                        catch (Exception) { }
-                    }
-                }
-                finally
-                {
-                    ConsoleUtils.WriteLine();
-                }
-            }
-
+        var filters = RunSubMenu();
+        if (!filters.Any())
             return true;
-        }
 
-        private IReadOnlyList<string> RunSubMenu()
+        foreach (var repository in Manager.Repositories)
         {
-            var filters = new List<CheckableMenuItem<string>>();
-
-            void Create(string filter)
+            ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Cleaning ");
+            ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
+            try
             {
-                filters.Add(new CheckableMenuItem<string>(filter, filter) { IsChecked = true });
+                var dir = repository.Executor.WorkingDirectory;
+                var allDirs = dir.GetDirectories("*", SearchOption.AllDirectories);
+                var filtered = allDirs
+                    .Where(x => filters.Contains(x.Name))
+                    .ToList();
+                foreach (var directory in filtered)
+                {
+                    try
+                    {
+                        directory.Delete(true);
+                    }
+                    catch (Exception) { }
+                }
             }
-
-            Create("bin");
-            Create("obj");
-            Create(".vs");
-
-            var menus = new List<MenuItem>
+            finally
             {
-                new Exit("Execute"),
-                new EndActionsSeparator(),
-            };
-            menus.AddRange(filters);
-            var menu = new Menu(menus)
-            {
-                PreventNewLineOnExecution = true,
-                LoopNavigation = true
-            };
-            menu.Run("Select which folders to clean-up:");
-
-            return filters
-                .Where(x => x.IsChecked)
-                .Select(x => x.Value)
-                .ToList();
+                ConsoleUtils.WriteLine();
+            }
         }
+
+        return true;
+    }
+
+    private IReadOnlyList<string> RunSubMenu()
+    {
+        var filters = new List<CheckableMenuItem<string>>();
+
+        void Create(string filter)
+        {
+            filters.Add(new CheckableMenuItem<string>(filter, filter) { IsChecked = true });
+        }
+
+        Create("bin");
+        Create("obj");
+        Create(".vs");
+
+        var menus = new List<MenuItem>
+        {
+            new Exit("Execute"),
+            new SeparatorMenuItem(),
+        };
+        menus.AddRange(filters);
+        var menu = new Menu(menus)
+        {
+            PreventNewLineOnExecution = true,
+            LoopNavigation = true
+        };
+        menu.Run("Select which folders to clean-up:");
+
+        return filters
+            .Where(x => x.IsChecked)
+            .Select(x => x.Value)
+            .ToList();
     }
 }

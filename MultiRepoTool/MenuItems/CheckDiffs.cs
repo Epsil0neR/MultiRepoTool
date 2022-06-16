@@ -6,104 +6,103 @@ using System.Collections.Generic;
 using System.Linq;
 using MultiRepoTool.Utils;
 
-namespace MultiRepoTool.MenuItems
+namespace MultiRepoTool.MenuItems;
+
+public class CheckDiffs : MenuItem
 {
-	public class CheckDiffs : MenuItem
-	{
-		public CheckDiffs(IEnumerable<GitRepository> repositories)
-			: base("Check diffs in 2 branches")
-		{
-			Repositories = repositories;
-		}
+    public GitRepositoriesManager Manager { get; }
 
-		public IEnumerable<GitRepository> Repositories { get; }
+    public CheckDiffs(GitRepositoriesManager manager)
+        : base("Check diffs in 2 branches")
+    {
+    }
 
-		public override bool Execute(Menu menu)
-		{
-			var repos = Repositories
-				.Select(x => new CheckableMenuItem<GitRepository>(x.Name, x))
-				.ToList<MenuItem>();
 
-			repos.Add(new EndActionsSeparator());
-			repos.Add(new Exit("Done"));
+    public override bool Execute(Menu menu)
+    {
+        var repos = Manager.Repositories
+            .Select(x => new CheckableMenuItem<GitRepository>(x.Name, x))
+            .ToList<MenuItem>();
 
-			var reposMenu = new Menu(repos)
-			{
-				PreventNewLineOnExecution = true
-			};
-			reposMenu.Run("Select repositories to perform check diff:");
+        repos.Add(new SeparatorMenuItem());
+        repos.Add(new Exit("Done"));
 
-			var repositories = repos
-				.OfType<CheckableMenuItem<GitRepository>>()
-				.Where(x => x.IsChecked)
-				.Select(x => x.Value)
-				.ToList();
+        var reposMenu = new Menu(repos)
+        {
+            PreventNewLineOnExecution = true
+        };
+        reposMenu.Run("Select repositories to perform check diff:");
 
-			foreach (var repository in repositories)
-			{
-				var l = SelectBranchName(repository, null);
-				if (l == null)
-					continue;
+        var repositories = repos
+            .OfType<CheckableMenuItem<GitRepository>>()
+            .Where(x => x.IsChecked)
+            .Select(x => x.Value)
+            .ToList();
 
-				var r = SelectBranchName(repository, l.Value.branch);
-				if (r == null)
-					continue;
+        foreach (var repository in repositories)
+        {
+            var l = SelectBranchName(repository, null);
+            if (l == null)
+                continue;
 
-				var lName = l.Value.local ? l.Value.branch.Local : l.Value.branch.RemoteBranch;
-				var rName = r.Value.local ? r.Value.branch.Local : r.Value.branch.RemoteBranch;
+            var r = SelectBranchName(repository, l.Value.branch);
+            if (r == null)
+                continue;
 
-				ConsoleUtils.Write("Left branch: ");
-				ConsoleUtils.WriteLine(lName, Constants.ColorBranchLocal);
+            var lName = l.Value.local ? l.Value.branch.Local : l.Value.branch.RemoteBranch;
+            var rName = r.Value.local ? r.Value.branch.Local : r.Value.branch.RemoteBranch;
 
-				ConsoleUtils.Write("Right branch: ");
-				ConsoleUtils.WriteLine(rName, Constants.ColorBranchLocal);
+            ConsoleUtils.Write("Left branch: ");
+            ConsoleUtils.WriteLine(lName, Constants.ColorBranchLocal);
 
-				Console.Clear();
-				var output = repository.Executor.Execute("Git Diff", string.Format(GitConst.CommandDiff, lName, rName));
-				Console.WriteLine(output);
-			}
+            ConsoleUtils.Write("Right branch: ");
+            ConsoleUtils.WriteLine(rName, Constants.ColorBranchLocal);
 
-			return true;
-		}
+            Console.Clear();
+            var output = repository.Executor.Execute("Git Diff", string.Format(GitConst.CommandDiff, lName, rName));
+            Console.WriteLine(output);
+        }
 
-		private (GitBranch branch, bool local)? SelectBranchName(GitRepository repository, GitBranch toSkip)
-		{
-			var items = new List<MenuItem>();
-			(GitBranch, bool)? rv = null;
-			items.AddRange(
-				repository.Branches
-					.Where(x => x.HasLocal() && !ReferenceEquals(toSkip, x))
-					.Select(x => new MenuItem(x.Local, _ =>
-					{
-						rv = (x, true);
-						return false;
-					})
-					{
-						HideExecutionText = true
-					}));
-			items.AddRange(
-				repository.Branches
-					.Where(x => x.HasRemoteBranch() && !ReferenceEquals(toSkip, x))
-					.Select(x => new MenuItem(x.RemoteBranch, _ =>
-					{
-						rv = (x, false);
-						return false;
-					})
-					{
-						HideExecutionText = true
-					}));
+        return true;
+    }
 
-			items.Add(new EndActionsSeparator());
-			items.Add(new Exit("Cancel"));
+    private (GitBranch branch, bool local)? SelectBranchName(GitRepository repository, GitBranch toSkip)
+    {
+        var items = new List<MenuItem>();
+        (GitBranch, bool)? rv = null;
+        items.AddRange(
+            repository.Branches
+                .Where(x => x.HasLocal() && !ReferenceEquals(toSkip, x))
+                .Select(x => new MenuItem(x.Local, _ =>
+                {
+                    rv = (x, true);
+                    return false;
+                })
+                {
+                    HideExecutionText = true
+                }));
+        items.AddRange(
+            repository.Branches
+                .Where(x => x.HasRemoteBranch() && !ReferenceEquals(toSkip, x))
+                .Select(x => new MenuItem(x.RemoteBranch, _ =>
+                {
+                    rv = (x, false);
+                    return false;
+                })
+                {
+                    HideExecutionText = true
+                }));
 
-			var menu = new Menu(items)
-			{
-				LoopNavigation = true,
-				PreventNewLineOnExecution = true
-			};
-			menu.Run("Select branch:");
+        items.Add(new SeparatorMenuItem());
+        items.Add(new Exit("Cancel"));
 
-			return rv;
-		}
-	}
+        var menu = new Menu(items)
+        {
+            LoopNavigation = true,
+            PreventNewLineOnExecution = true
+        };
+        menu.Run("Select branch:");
+
+        return rv;
+    }
 }

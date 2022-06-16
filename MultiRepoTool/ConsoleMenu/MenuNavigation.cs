@@ -1,10 +1,9 @@
-﻿namespace MultiRepoTool.ConsoleMenu
+﻿namespace MultiRepoTool.ConsoleMenu;
+
+public enum MenuNavigation
 {
-	public enum MenuNavigation
-	{
-		None,
-		SelectPrevious,
-		SelectNext,
-		Execute,
-	}
+    None,
+    SelectPrevious,
+    SelectNext,
+    Execute,
 }

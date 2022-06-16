@@ -5,120 +5,119 @@ using System.IO;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Utils;
 
-namespace MultiRepoTool
+namespace MultiRepoTool;
+
+public class UserItems
 {
-    public class UserItems
+    public Options Options { get; }
+    public IReadOnlyList<MenuItem> MenuItems { get; }
+
+    public UserItems(Options options)
     {
-        public Options Options { get; }
-        public IReadOnlyList<MenuItem> MenuItems { get; }
-
-        public UserItems(Options options)
+        Options = options;
+        var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
+        var directory = Path.Combine(rootDirectory, options.UserMenuItemsFolder);
+        bool exists = Directory.Exists(directory);
+        if (!exists)
         {
-            Options = options;
-            var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
-            var directory = Path.Combine(rootDirectory, options.UserMenuItemsFolder);
-            bool exists = Directory.Exists(directory);
-            if (!exists)
+            MenuItems = Array.Empty<MenuItem>();
+            return;
+        }
+
+        var items = new List<MenuItem>();
+        var files = Directory.GetFiles(directory);
+        foreach (string file in files)
+        {
+            var info = new FileInfo(file);
+            var mi = new MenuItem(info.Name, () => Execute(info));
+            items.Add(mi);
+        }
+
+        MenuItems = items;
+    }
+
+    private bool Execute(FileInfo info)
+    {
+        switch (info.Extension.ToLowerInvariant())
+        {
+            case ".cmd":
+            case ".bat":
+                RunCmd(info);
+                break;
+            case ".exe":
+                RunExe(info);
+                break;
+            case ".lnk":
+                RunLnk(info);
+                break;
+        }
+
+        return true;
+    }
+
+    private void RunCmd(FileInfo info)
+    {
+        var cmdPath = @"C:\Windows\System32\cmd.exe";
+        var arguments = $@"/C ""{info.FullName}""";
+        var proc = new Process
+        {
+            StartInfo =
             {
-                MenuItems = Array.Empty<MenuItem>();
-                return;
+                FileName = cmdPath,
+                Arguments = arguments,
+                WorkingDirectory = Options.Path,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                WindowStyle = ProcessWindowStyle.Hidden
             }
+        };
 
-            var items = new List<MenuItem>();
-            var files = Directory.GetFiles(directory);
-            foreach (string file in files)
+        proc.Start();
+        var output = proc.StandardOutput.ReadToEnd();
+        proc.WaitForExit();
+
+        ConsoleUtils.WriteLine(output);
+    }
+
+    private void RunExe(FileInfo info)
+    {
+        var proc = new Process
+        {
+            StartInfo =
             {
-                var info = new FileInfo(file);
-                var mi = new MenuItem(info.Name, () => Execute(info));
-                items.Add(mi);
+                FileName = info.FullName,
+                WorkingDirectory = Options.Path,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                WindowStyle = ProcessWindowStyle.Hidden
             }
+        };
 
-            MenuItems = items;
-        }
+        proc.Start();
+        var output = proc.StandardOutput.ReadToEnd();
+        proc.WaitForExit();
 
-        private bool Execute(FileInfo info)
+        ConsoleUtils.WriteLine(output);
+    }
+
+    private void RunLnk(FileInfo info)
+    {
+        var proc = new Process
         {
-            switch (info.Extension.ToLowerInvariant())
+            StartInfo =
             {
-                case ".cmd":
-                case ".bat":
-                    RunCmd(info);
-                    break;
-                case ".exe":
-                    RunExe(info);
-                    break;
-                case ".lnk":
-                    RunLnk(info);
-                    break;
+                FileName = info.FullName,
+                WorkingDirectory = Options.Path,
+                //UseShellExecute = false,
+                RedirectStandardOutput = true,
+                WindowStyle = ProcessWindowStyle.Hidden
             }
+        };
 
-            return true;
-        }
+        proc.Start();
+        var output = proc.StandardOutput.ReadToEnd();
+        proc.WaitForExit();
 
-        private void RunCmd(FileInfo info)
-        {
-            var cmdPath = @"C:\Windows\System32\cmd.exe";
-            var arguments = $@"/C ""{info.FullName}""";
-            var proc = new Process
-            {
-                StartInfo =
-                {
-                    FileName = cmdPath,
-                    Arguments = arguments,
-                    WorkingDirectory = Options.Path,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                }
-            };
-
-            proc.Start();
-            var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit();
-
-            ConsoleUtils.WriteLine(output);
-        }
-
-        private void RunExe(FileInfo info)
-        {
-            var proc = new Process
-            {
-                StartInfo =
-                {
-                    FileName = info.FullName,
-                    WorkingDirectory = Options.Path,
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                }
-            };
-
-            proc.Start();
-            var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit();
-
-            ConsoleUtils.WriteLine(output);
-        }
-
-        private void RunLnk(FileInfo info)
-        {
-            var proc = new Process
-            {
-                StartInfo =
-                {
-                    FileName = info.FullName,
-                    WorkingDirectory = Options.Path,
-                    //UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                }
-            };
-
-            proc.Start();
-            var output = proc.StandardOutput.ReadToEnd();
-            proc.WaitForExit();
-
-            ConsoleUtils.WriteLine(output);
-        }
+        ConsoleUtils.WriteLine(output);
     }
 }

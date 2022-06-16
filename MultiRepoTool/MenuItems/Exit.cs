@@ -1,24 +1,23 @@
 ﻿using System;
 using MultiRepoTool.ConsoleMenu;
 
-namespace MultiRepoTool.MenuItems
+namespace MultiRepoTool.MenuItems;
+
+public class Exit : MenuItem
 {
-    public class Exit : MenuItem
+    public Exit()
+        : base("Exit")
     {
-        public Exit()
-            : base("Exit")
-        {
-        }
+    }
 
-        public Exit(string title)
-            : base(title)
-        {
-        }
+    public Exit(string title)
+        : base(title)
+    {
+    }
 
-        public override bool Execute(Menu menu)
-        {
-            Console.WriteLine($"Exited");
-            return false;
-        }
+    public override bool Execute(Menu menu)
+    {
+        Console.WriteLine($"Exited");
+        return false;
     }
 }

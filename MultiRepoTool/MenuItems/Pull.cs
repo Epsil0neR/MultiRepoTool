@@ -4,29 +4,28 @@ using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
 
-namespace MultiRepoTool.MenuItems
+namespace MultiRepoTool.MenuItems;
+
+public class Pull : MenuItem
 {
-	public class Pull : MenuItem
-	{
-		public IEnumerable<GitRepository> Repositories { get; }
+    public GitRepositoriesManager Manager { get; }
 
-		public Pull(IEnumerable<GitRepository> repositories) 
-			: base("Pull")
-		{
-			Repositories = repositories;
-		}
+    public Pull(GitRepositoriesManager manager) 
+        : base("Pull")
+    {
+        Manager = manager;
+    }
 
-		public override bool Execute(Menu menu)
-		{
-			Console.WriteLine($"Executing {Title}.");
-			foreach (var repository in Repositories)
-			{
-				ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Pulling ");
-				ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
-				repository.Pull();
-				ConsoleUtils.WriteLine($" {repository.ActiveBranch}", Constants.ColorBranchLocal);
-			}
-			return true;
-		}
-	}
+    public override bool Execute(Menu menu)
+    {
+        Console.WriteLine($"Executing {Title}.");
+        foreach (var repository in Manager.Repositories)
+        {
+            ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Pulling ");
+            ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
+            repository.Pull();
+            ConsoleUtils.WriteLine($" {repository.ActiveBranch}", Constants.ColorBranchLocal);
+        }
+        return true;
+    }
 }

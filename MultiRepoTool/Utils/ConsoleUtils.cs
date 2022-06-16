@@ -1,81 +1,80 @@
 ﻿using System;
 
-namespace MultiRepoTool.Utils
+namespace MultiRepoTool.Utils;
+
+public static class ConsoleUtils
 {
-	public static class ConsoleUtils
-	{
-		public static void SetCursorLeft(int left)
-		{
-			(int _, var top) = Console.GetCursorPosition();
-			Console.SetCursorPosition(left, top);
-		}
+    public static void SetCursorLeft(int left)
+    {
+        (int _, var top) = Console.GetCursorPosition();
+        Console.SetCursorPosition(left, top);
+    }
 
-		public static void Write(string text, ConsoleColor? foreground = null, ConsoleColor? background = null)
-		{
-            if (foreground is null && background is null)
-            {
-                Console.Write(text);
-                return;
-            }
+    public static void Write(string text, ConsoleColor? foreground = null, ConsoleColor? background = null)
+    {
+        if (foreground is null && background is null)
+        {
+            Console.Write(text);
+            return;
+        }
 
-			var fore = Console.ForegroundColor;
-			var back = Console.BackgroundColor;
+        var fore = Console.ForegroundColor;
+        var back = Console.BackgroundColor;
 
-			if (foreground.HasValue)
-				Console.ForegroundColor = foreground.Value;
-			if (background.HasValue)
-				Console.BackgroundColor = background.Value;
+        if (foreground.HasValue)
+            Console.ForegroundColor = foreground.Value;
+        if (background.HasValue)
+            Console.BackgroundColor = background.Value;
 
-			Console.Write(text);
+        Console.Write(text);
 
-			Console.ForegroundColor = fore;
-			Console.BackgroundColor = back;
-		}
+        Console.ForegroundColor = fore;
+        Console.BackgroundColor = back;
+    }
 
-		public static void WriteLine(string? text = null, ConsoleColor? foreground = null, ConsoleColor? background = null)
-		{
-			if (text is null)
-			{
-				Console.WriteLine();
-				return;
-			}
+    public static void WriteLine(string? text = null, ConsoleColor? foreground = null, ConsoleColor? background = null)
+    {
+        if (text is null)
+        {
+            Console.WriteLine();
+            return;
+        }
 
-            if (foreground is null && background is null)
-            {
-                Console.WriteLine(text);
-                return;
-            }
+        if (foreground is null && background is null)
+        {
+            Console.WriteLine(text);
+            return;
+        }
 
-            var fore = Console.ForegroundColor;
-			var back = Console.BackgroundColor;
+        var fore = Console.ForegroundColor;
+        var back = Console.BackgroundColor;
 
-			if (foreground.HasValue)
-				Console.ForegroundColor = foreground.Value;
-			if (background.HasValue)
-				Console.BackgroundColor = background.Value;
+        if (foreground.HasValue)
+            Console.ForegroundColor = foreground.Value;
+        if (background.HasValue)
+            Console.BackgroundColor = background.Value;
 
-			Console.WriteLine(text);
+        Console.WriteLine(text);
 
-			Console.ForegroundColor = fore;
-			Console.BackgroundColor = back;
-		}
+        Console.ForegroundColor = fore;
+        Console.BackgroundColor = back;
+    }
 
-		public static string? ReadLine(ConsoleColor? foreground = null, ConsoleColor? background = null)
-		{
-			var fore = Console.ForegroundColor;
-			var back = Console.BackgroundColor;
+    public static string? ReadLine(ConsoleColor? foreground = null, ConsoleColor? background = null)
+    {
+        var fore = Console.ForegroundColor;
+        var back = Console.BackgroundColor;
 
-			if (foreground.HasValue)
-				Console.ForegroundColor = foreground.Value;
-			if (background.HasValue)
-				Console.BackgroundColor = background.Value;
+        if (foreground.HasValue)
+            Console.ForegroundColor = foreground.Value;
+        if (background.HasValue)
+            Console.BackgroundColor = background.Value;
 
-			var rv = Console.ReadLine();
+        var rv = Console.ReadLine();
 
-			Console.ForegroundColor = fore;
-			Console.BackgroundColor = back;
+        Console.ForegroundColor = fore;
+        Console.BackgroundColor = back;
 
-			return rv;
-		}
-	}
+        return rv;
+    }
 }

@@ -4,28 +4,27 @@ using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
 
-namespace MultiRepoTool.MenuItems
+namespace MultiRepoTool.MenuItems;
+
+public class Reload : MenuItem
 {
-	public class Reload : MenuItem
-	{
-		public IEnumerable<GitRepository> Repositories { get; }
+    public GitRepositoriesManager Manager { get; }
 
-		public Reload(IEnumerable<GitRepository> repositories)
-			: base("Reload")
-		{
-			Repositories = repositories;
-		}
+    public Reload(GitRepositoriesManager manager)
+        : base("Reload")
+    {
+        Manager = manager;
+    }
 
-		public override bool Execute(Menu menu)
-		{
-			Console.WriteLine($"Executing {Title}.");
-			foreach (var repository in Repositories)
-			{
-				ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Reloading ");
-				ConsoleUtils.WriteLine(repository.Name, Constants.ColorRepository);
-				repository.Reload();
-			}
-			return true;
-		}
-	}
+    public override bool Execute(Menu menu)
+    {
+        Console.WriteLine($"Executing {Title}.");
+        foreach (var repository in Manager.Repositories)
+        {
+            ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Reloading ");
+            ConsoleUtils.WriteLine(repository.Name, Constants.ColorRepository);
+            repository.Reload();
+        }
+        return true;
+    }
 }

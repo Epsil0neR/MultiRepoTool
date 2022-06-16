@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
 using MultiRepoTool.MenuItems;
@@ -21,8 +23,11 @@ namespace MultiRepoTool.Profiles;
 
 internal class ProfilesManager : List<Profile>
 {
+    private readonly GitRepositoriesManager _repositoriesManager;
+    internal const string DefaultProfileName = "Default";
+    
     private Profile _current;
-    private readonly List<GitRepository> _all;
+    
     public Options Options { get; }
 
     public Profile Default { get; }
@@ -41,10 +46,11 @@ internal class ProfilesManager : List<Profile>
         }
     }
 
-    public ProfilesManager(Options options, List<GitRepository> allRepositories)
+    public ProfilesManager(Options options, GitRepositoriesManager repositoriesManager)
     {
         Options = options;
-        _all = allRepositories;
+        _repositoriesManager = repositoriesManager;
+        
 
         var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
         var directory = Path.Combine(rootDirectory, options.UserProfilesFolder);
@@ -56,31 +62,54 @@ internal class ProfilesManager : List<Profile>
             {
                 var info = new FileInfo(file);
                 var json = File.ReadAllText(info.FullName, Encoding.UTF8);
-                var data = JsonSerializer.Deserialize<ProfileJson>(json);
-                var profile = new Profile(this, allRepositories)
-                {
-                    Name = Path.GetFileNameWithoutExtension(info.Name),
-                    RepositoriesMode = data?.RepositoriesMode ?? ListMode.Black,
-                    Repositories = data?.Repositories ?? new string[0],
-                };
+                var data = JsonSerializer.Deserialize<ProfileDto>(json);
+                var profile = data?.FromDto(Path.GetFileNameWithoutExtension(info.Name), this, repositoriesManager);
+                
+                if (profile is null)
+                    continue;
+                
                 Add(profile);
 
-                if ("default".Equals(profile.Name, StringComparison.InvariantCultureIgnoreCase))
+                if (DefaultProfileName.Equals(profile.Name, StringComparison.InvariantCultureIgnoreCase))
                     Default = profile;
             }
         }
 
         if (Default is null)
         {
-            Default = new Profile(this, allRepositories)
+            Default = new Profile(this, repositoriesManager)
             {
-                Name = "Default"
+                Name = DefaultProfileName
             };
             Insert(0, Default);
+            _ = Save(Default);
         }
 
         if (!Activate(options.Profile))
             Current = Default;
+    }
+
+    public async Task Save(Profile profile, CancellationToken token = default)
+    {
+        if (profile is null)
+            throw new ArgumentNullException(nameof(profile));
+
+        var name = profile.Name;
+        if (string.IsNullOrWhiteSpace(name))
+            name = DefaultProfileName;
+
+        var dto = profile.ToDto();
+        var options = new JsonSerializerOptions
+        {
+            WriteIndented = true
+        };
+        var json = JsonSerializer.Serialize(dto, options);
+        var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
+        var directory = Path.Combine(rootDirectory, Options.UserProfilesFolder);
+        var path = Path.Combine(directory, $"{name}.profile");
+
+        Directory.CreateDirectory(directory);
+        await File.WriteAllTextAsync(path, json, Encoding.UTF8, token);
     }
 
 
@@ -117,7 +146,7 @@ internal class ProfilesManager : List<Profile>
 
         if (Count > 1)
         {
-            menus.Add(new EndActionsSeparator());
+            menus.Add(new SeparatorMenuItem());
 
             foreach (var profile in this)
             {
@@ -128,7 +157,7 @@ internal class ProfilesManager : List<Profile>
             }
         }
 
-        menus.Add(new EndActionsSeparator());
+        menus.Add(new SeparatorMenuItem());
         menus.Add(new MenuItem("Create new profile...", CreateProfileHandler));
         menus.Add(new MenuItem("Cancel", () => false));
 
@@ -160,9 +189,13 @@ internal class ProfilesManager : List<Profile>
             return true;
         }
 
-        var rv = new Profile(this, _all);
+        var rv = new Profile(this, _repositoriesManager)
+        {
+            Name = name
+        };
         Add(rv);
         Current = rv;
+        Save(rv);
         return false;
     }
 

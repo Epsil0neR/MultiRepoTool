@@ -3,23 +3,19 @@ using System.Collections.Generic;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
 
-namespace MultiRepoTool.MenuItems
+namespace MultiRepoTool.MenuItems;
+
+public class ClearConsole : MenuItem
 {
-	public class ClearConsole : MenuItem
-	{
-		public IEnumerable<GitRepository> Repositories { get; }
+    public ClearConsole()
+        : base("Clear console")
+    {
+    }
 
-		public ClearConsole(IEnumerable<GitRepository> repositories)
-			: base("Clear console")
-		{
-			Repositories = repositories;
-		}
-
-		public override bool Execute(Menu menu)
-		{
-			Console.WriteLine($"Executing {Title}.");
-			menu.ClearMenu(0);
-			return true;
-		}
-	}
+    public override bool Execute(Menu menu)
+    {
+        Console.WriteLine($"Executing {Title}.");
+        menu.ClearMenu(0);
+        return true;
+    }
 }

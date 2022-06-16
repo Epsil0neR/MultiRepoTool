@@ -8,78 +8,77 @@ using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
 
-namespace MultiRepoTool.MenuItems
+namespace MultiRepoTool.MenuItems;
+
+public class OpenSolution : MenuItem
 {
-    public class OpenSolution : MenuItem
+    public GitRepositoriesManager Manager { get; }
+
+    public OpenSolution(GitRepositoriesManager manager)
+        : base("Open solution")
     {
-        public IEnumerable<GitRepository> Repositories { get; }
+        Manager = manager;
+    }
 
-        public OpenSolution(IEnumerable<GitRepository> repositories)
-            : base("Open solution")
+    public override bool Execute(Menu menu)
+    {
+        Execute().GetAwaiter().GetResult();
+        return true;
+    }
+
+    private async Task Execute()
+    {
+        var filesPerRepository = await Task.WhenAll(Manager.Repositories.Select(x => x.SolutionFiles));
+        var menus = new List<MenuItem>();
+        for (int index = 0; index < filesPerRepository.Length; index++)
         {
-            Repositories = repositories;
+            var files = filesPerRepository[index];
+            var repo = Manager.Repositories.ElementAt(index);
+
+            menus.AddRange(ToMenuItem(repo, files));
         }
 
-        public override bool Execute(Menu menu)
+        menus.Add(new SeparatorMenuItem());
+        menus.Add(new Exit("Done"));
+
+        var reposMenu = new Menu(menus)
         {
-            Execute().GetAwaiter().GetResult();
-            return true;
-        }
+            PreventNewLineOnExecution = true,
+            LoopNavigation = true
+        };
+        reposMenu.Run();
+    }
 
-        private async Task Execute()
+    private IEnumerable<MenuItem> ToMenuItem(GitRepository repository, IReadOnlyList<FileInfo> files)
+    {
+        if (!files.Any())
+            yield break;
+
+        yield return new MenuItem($"=== {repository.Name} ===", _ => false)
         {
-            var filesPerRepository = await Task.WhenAll(Repositories.Select(x => x.SolutionFiles));
-            var menus = new List<MenuItem>();
-            for (int index = 0; index < filesPerRepository.Length; index++)
-            {
-                var files = filesPerRepository[index];
-                var repo = Repositories.ElementAt(index);
+            CanExecute = false
+        };
 
-                menus.AddRange(ToMenuItem(repo, files));
-            }
-
-            menus.Add(new EndActionsSeparator());
-            menus.Add(new Exit("Done"));
-
-            var reposMenu = new Menu(menus)
-            {
-                PreventNewLineOnExecution = true,
-                LoopNavigation = true
-            };
-            reposMenu.Run();
-        }
-
-        private IEnumerable<MenuItem> ToMenuItem(GitRepository repository, IReadOnlyList<FileInfo> files)
+        foreach (var file in files)
         {
-            if (!files.Any())
-                yield break;
-
-            yield return new MenuItem($"=== {repository.Name} ===", _ => false)
+            bool Handler()
             {
-                CanExecute = false
-            };
-
-            foreach (var file in files)
-            {
-                bool Handler()
+                ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Opening ");
+                ConsoleUtils.Write(file.FullName, Constants.ColorBranchLocal);
+                ConsoleUtils.Write(" Repository: ");
+                ConsoleUtils.WriteLine(repository.Name, Constants.ColorRepository);
+                var p = new Process
                 {
-                    ConsoleUtils.Write($"{DateTime.Now:HH:mm:ss.fff} - Opening ");
-                    ConsoleUtils.Write(file.FullName, Constants.ColorBranchLocal);
-                    ConsoleUtils.Write(" Repository: ");
-                    ConsoleUtils.WriteLine(repository.Name, Constants.ColorRepository);
-                    var p = new Process
+                    StartInfo = new ProcessStartInfo(file.FullName)
                     {
-                        StartInfo = new ProcessStartInfo(file.FullName)
-                        {
-                            UseShellExecute = true
-                        }
-                    };
-                    p.Start();
-                    return false;
-                }
-
-                yield return new MenuItem(file.Name, Handler);
+                        UseShellExecute = true
+                    }
+                };
+                p.Start();
+                return false;
             }
+
+            yield return new MenuItem(file.Name, Handler);
         }
     }
 }

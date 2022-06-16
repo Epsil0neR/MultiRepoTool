@@ -6,68 +6,66 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MultiRepoTool.MenuItems
-{
-	public class Status : MenuItem
-	{
-		public IEnumerable<GitRepository> Repositories { get; }
-        public Options Options { get; }
+namespace MultiRepoTool.MenuItems;
 
-        public Status(IEnumerable<GitRepository> repositories, Options options)
-			: base("Status")
+public class Status : MenuItem
+{
+    public GitRepositoriesManager Manager { get; }
+    public Options Options { get; }
+
+    public Status(GitRepositoriesManager manager, Options options)
+        : base("Status")
+    {
+        Manager = manager;
+        Options = options;
+    }
+
+    public override bool Execute(Menu menu)
+    {
+        Console.WriteLine($"Executing {Title}.");
+
+        var longestNameLength = Manager.Repositories.Max(x => x.Name.Length);
+        foreach (var repository in Manager.Repositories)
         {
-            Repositories = repositories;
-            Options = options;
+            if (Options.ReloadBeforeStatus)
+                repository.Reload();
+
+            var branch = repository.ActiveBranch;
+            if (branch == null)
+            {
+                ConsoleUtils.WriteLine("HEAD detached", ConsoleColor.DarkRed);
+                continue;
+            }
+
+            ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
+            ConsoleUtils.SetCursorLeft(longestNameLength + 8);
+            ConsoleUtils.Write($" {branch.GetNameWithTrackingInfo()}", Constants.ColorBranchLocal);
+            ConsoleUtils.Write("...");
+            ConsoleUtils.Write(branch.RemoteBranch, Constants.ColorBranchRemote);
+            ConsoleUtils.WriteLine();
+            PrintStatus(branch.Status);
+            ConsoleUtils.WriteLine();
         }
 
-		public override bool Execute(Menu menu)
-		{
-			Console.WriteLine($"Executing {Title}.");
+        return true;
+    }
 
-			var longestNameLength = Repositories.Max(x => x.Name.Length);
-			foreach (var repository in Repositories)
-			{
-                if (Options.ReloadBeforeStatus)
-                    repository.Reload();
+    private static void PrintStatus(string status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+            return;
 
-				var branch = repository.ActiveBranch;
-				if (branch == null)
-				{
-					ConsoleUtils.WriteLine("HEAD detached", ConsoleColor.DarkRed);
-					continue;
-				}
+        var lines = status.Split('\n');
 
-				ConsoleUtils.Write(repository.Name, Constants.ColorRepository);
-				ConsoleUtils.SetCursorLeft(longestNameLength + 8);
-				ConsoleUtils.Write($" {branch.GetNameWithTrackingInfo()}", Constants.ColorBranchLocal);
-				ConsoleUtils.Write("...");
-				ConsoleUtils.Write(branch.RemoteBranch, Constants.ColorBranchRemote);
-				ConsoleUtils.WriteLine();
-				PrintStatus(branch.Status);
-				ConsoleUtils.WriteLine();
-			}
+        foreach (var line in lines) 
+            ConsoleUtils.WriteLine(line, GetColor(line));
+    }
 
-			return true;
-		}
+    private static ConsoleColor GetColor(string line)
+    {
+        if (line.IsProjectRelatedFile())
+            return ConsoleColor.Blue;
 
-		private static void PrintStatus(string status)
-		{
-			if (string.IsNullOrWhiteSpace(status))
-				return;
-
-			var lines = status.Split('\n');
-
-			foreach (var line in lines) 
-				ConsoleUtils.WriteLine(line, GetColor(line));
-		}
-
-		private static ConsoleColor GetColor(string line)
-		{
-            if (line.IsProjectRelatedFile())
-				return ConsoleColor.Blue;
-
-			return ConsoleColor.White;
-		}
-	}
+        return ConsoleColor.White;
+    }
 }
-
