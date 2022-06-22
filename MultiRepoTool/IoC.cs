@@ -40,6 +40,11 @@ public static class IoC
         return (TCast)_container.Resolve(t);
     }
 
+    public static T Resolve<T>(string name)
+    {
+        return _container.Resolve<T>(name);
+    }
+
     public static void Register<T>()
     {
         _container.RegisterType<T>();
@@ -72,6 +77,14 @@ public static class IoC
     public static void RegisterInstance(Type type, object instance)
     {
         _container.RegisterInstance(type, instance);
+    }
+
+    public static void RegisterInstance<T>(string name, T instance)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentNullException(nameof(name));
+        
+        _container.RegisterInstance(typeof(T), name, instance);
     }
 
     public static IEnumerable<T> ResolveAll<T>() where T : class
