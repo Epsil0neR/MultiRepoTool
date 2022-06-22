@@ -54,7 +54,7 @@ public class OpenSolution : MenuItem
         if (!files.Any())
             yield break;
 
-        yield return new MenuItem($"=== {repository.Name} ===", _ => false)
+        yield return new($"=== {repository.Name} ===", _ => false)
         {
             CanExecute = false
         };
@@ -69,7 +69,7 @@ public class OpenSolution : MenuItem
                 ConsoleUtils.WriteLine(repository.Name, Constants.ColorRepository);
                 var p = new Process
                 {
-                    StartInfo = new ProcessStartInfo(file.FullName)
+                    StartInfo = new(file.FullName)
                     {
                         UseShellExecute = true
                     }
@@ -78,7 +78,7 @@ public class OpenSolution : MenuItem
                 return false;
             }
 
-            yield return new MenuItem(file.Name, Handler);
+            yield return new(file.Name, Handler);
         }
     }
 }

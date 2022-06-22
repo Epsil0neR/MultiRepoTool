@@ -5,30 +5,18 @@ using MultiRepoTool.Git;
 
 namespace MultiRepoTool.Profiles;
 
-/// <summary>
-/// Indicates how list will be threaten - as <see cref="White"/> or as <see cref="Black"/>.
-/// </summary>
-public enum ListMode {
-    /// <summary>
-    /// Items selected by user will not be available in other places.
-    /// </summary>
-    Black,
-        
-    /// <summary>
-    /// Only selected by user items will be available in other places.
-    /// </summary>
-    White    
-}
-
 public class Profile
 {
     public Profile(ProfilesManager manager)
     {
         Manager = manager ?? throw new ArgumentNullException(nameof(manager));
     }
-    
+
     public ProfilesManager Manager { get; }
 
+    /// <summary>
+    /// Profile name. It is also a file name without extension to save profile on disk.
+    /// </summary>
     public string Name { get; init; }
 
     /// <summary>
@@ -37,8 +25,14 @@ public class Profile
     /// </summary>
     public ListMode RepositoriesMode { get; set; } = ListMode.Black;
 
+    /// <summary>
+    /// Names of repositories that will be blacklisted/whitelisted.
+    /// </summary>
     public string[] Repositories { get; set; } = Array.Empty<string>();
-        
+
+    /// <summary>
+    /// Root menu items titles to hide.  
+    /// </summary>
     public string[] MenuItemsToHide { get; set; } = Array.Empty<string>();
 
     internal void Activate()
@@ -71,12 +65,18 @@ public class Profile
     private void ActivateRootMenu()
     {
         var menuItemsToHide = MenuItemsToHide;
-        foreach (var item in Manager.RootMenuItems) 
+        foreach (var item in Manager.RootMenuItems)
             item.IsHidden = menuItemsToHide?.Contains(item.Title, StringComparer.InvariantCultureIgnoreCase) ?? false;
     }
 
+    /// <summary>
+    /// Saves profile and re-actives this profile.
+    /// </summary>
     public void ApplyChangesAndSave()
     {
+        if (!ReferenceEquals(Manager.Current, this))
+            return;
+
         Manager.Save(this);
         Activate();
     }

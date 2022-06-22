@@ -12,7 +12,7 @@ namespace MultiRepoTool.MenuItems;
 public class ProfileRootMenuItem : MenuItem
 {
     private Action? _subMenuExit;
-    
+
     private ProfilesManager ProfilesManager { get; }
     public GitRepositoriesManager GitRepositoriesManager { get; }
 
@@ -24,56 +24,17 @@ public class ProfileRootMenuItem : MenuItem
         HideExecutionText = true;
     }
 
-
     public override bool Execute(Menu menu)
     {
-        /*
-        Active: {Profile.Name}
-        Change Profile
-        ==============
-        Edit list of repositories
-        Edit menu
-        ==============
-        Back
-        */
-        
-        /* Change profile sub-menu:
-        
-        Default {Profile.IsActive}
-        ==============
-        List of {Profile.Name}{Profile.IsActive}
-        ==============
-        Create new profile... => Will ask for profile name. "Press ESC to cancel profile creation"
-        ==============
-        Back
-        
-        */
-        
-        /* Edit list of repositories
-        
-        Mode: Black | White (show only one item, change with Enter)
-        ==============
-        List of {Repository.Name} (-Nothing-|Excluded|Included)  => Included/Excluded depends on Mode.
-        ==============
-        Save and back
-        Discard changes
-        */
-        
-        /* Edit menu
-        List of {Menu.Text} (-Nothing-|Excluded)
-        ==============
-        Save and back
-        Discard changes
-        */
-
         List<ColoredTextPart> GetCurrentProfileTitle()
         {
-            return new List<ColoredTextPart>
+            return new()
             {
                 new("Current: "),
                 new(ProfilesManager.Current.Name, ConsoleColor.Yellow)
             };
         }
+
         var miCurrent = new MenuItem(
             GetCurrentProfileTitle(),
             () => false)
@@ -98,11 +59,8 @@ public class ProfileRootMenuItem : MenuItem
             LoopNavigation = true
         };
 
-        _subMenuExit = () =>
-        {
-            miCurrent.ColoredTitle = GetCurrentProfileTitle();
-        };
-        
+        _subMenuExit = () => { miCurrent.ColoredTitle = GetCurrentProfileTitle(); };
+
         submenu.Run();
         return true;
     }
@@ -116,16 +74,16 @@ public class ProfileRootMenuItem : MenuItem
                 new(profile.Name)
             };
             if (ReferenceEquals(ProfilesManager.Current, profile))
-                title.Add(new ColoredTextPart(" (Active)", ConsoleColor.Yellow));
+                title.Add(new(" (Active)", ConsoleColor.Yellow));
 
-            return new MenuItem(title, () =>
+            return new(title, () =>
             {
                 ProfilesManager.Current = profile;
                 _subMenuExit?.Invoke();
                 return false;
             });
         }
-        
+
         var d = ProfilesManager.Default;
         var menus = new List<MenuItem>()
         {
@@ -139,11 +97,12 @@ public class ProfileRootMenuItem : MenuItem
                 continue;
             menus.Add(Convert(profile));
         }
+
         if (ProfilesManager.Count > 1)
             menus.Add(new SeparatorMenuItem());
-        
-        menus.Add(new MenuItem("Back", () => false));
-        
+
+        menus.Add(new("Back", () => false));
+
         var menu = new Menu(menus)
         {
             LoopNavigation = true,
@@ -151,20 +110,7 @@ public class ProfileRootMenuItem : MenuItem
         };
         menu.Run();
         return true;
-                
-        /* Change profile sub-menu:
-
-        Create new profile... => Will ask for profile name. "Press ESC to cancel profile creation"
-        ==============
-        Default {Profile.IsActive}
-        List of {Profile.Name}{Profile.IsActive}
-        ==============
-        Back
-        
-        */
     }
-    
-    
 
     private bool SubMenuRepositories()
     {
@@ -175,7 +121,7 @@ public class ProfileRootMenuItem : MenuItem
 
         List<ColoredTextPart> GetModeTitle()
         {
-            return new List<ColoredTextPart>
+            return new()
             {
                 new("Mode: "),
                 new(mode.ToString(), ConsoleColor.Yellow)
@@ -186,8 +132,8 @@ public class ProfileRootMenuItem : MenuItem
         {
             p.RepositoriesMode = mode;
             p.Repositories = reposMenuItems
-                .Where(x=>x.IsChecked)
-                .Select(x=>x.Value.Name)
+                .Where(x => x.IsChecked)
+                .Select(x => x.Value.Name)
                 .ToArray();
             p.ApplyChangesAndSave();
             return false;
@@ -200,14 +146,14 @@ public class ProfileRootMenuItem : MenuItem
 
         CheckableMenuItem<GitRepository> ToMenuItem(GitRepository repository)
         {
-            return new CheckableMenuItem<GitRepository>(repository.Name, repository)
+            return new(repository.Name, repository)
             {
                 IsChecked = repos.Contains(repository.Name, StringComparer.InvariantCultureIgnoreCase)
             };
         }
 
         MenuItem miMode = null;
-        miMode = new MenuItem(GetModeTitle(), () =>
+        miMode = new(GetModeTitle(), () =>
         {
             mode = mode == ListMode.Black
                 ? ListMode.White
@@ -225,16 +171,16 @@ public class ProfileRootMenuItem : MenuItem
             miMode,
             new SeparatorMenuItem(),
         };
-        
+
         reposMenuItems.ReplaceAll(GitRepositoriesManager.AllRepositories.Select(ToMenuItem));
         menus.AddRange(reposMenuItems);
-        
+
         if (GitRepositoriesManager.AllRepositories.Count > 0)
             menus.Add(new SeparatorMenuItem());
-        
+
         menus.Add(new("Save and back", Save));
         menus.Add(new("Discard changes and back", DiscardChanges));
-        
+
         var menu = new Menu(menus)
         {
             LoopNavigation = true,
@@ -243,15 +189,6 @@ public class ProfileRootMenuItem : MenuItem
         menu.Run();
 
         return true;
-        /* Edit list of repositories
-
-        Mode: Black | White (show only one item, change with Enter)
-        ==============
-        List of {Repository.Name} (-Nothing-|Excluded|Included)  => Included/Excluded depends on Mode.
-        ==============
-        Save and back
-        Discard changes
-        */
     }
 
     private bool SubMenuEditMenu()
@@ -271,26 +208,26 @@ public class ProfileRootMenuItem : MenuItem
             menusToHide.Add(mi);
             menus.Add(mi);
         }
-        
+
         bool Save()
         {
             foreach (var item in menusToHide)
             {
                 item.Value.IsHidden = item.IsChecked;
             }
-            
+
             p.MenuItemsToHide = menusToHide
-                .Where(x=>x.IsChecked)
-                .Select(x=>x.Value.Title)
+                .Where(x => x.IsChecked)
+                .Select(x => x.Value.Title)
                 .ToArray();
             p.ApplyChangesAndSave();
-            
+
             return false;
         }
-        
+
         menus.Add(new("Save and back", Save));
         menus.Add(new("Discard changes and back", () => false));
-        
+
         var menu = new Menu(menus)
         {
             LoopNavigation = true,
@@ -299,14 +236,6 @@ public class ProfileRootMenuItem : MenuItem
         menu.Run();
 
         return true;
-        
-        /* Edit menu
-         
-        List of {Menu.Text} (-Nothing-|Excluded)
-        ==============
-        Save and back
-        Discard changes
-        */
     }
 
 
@@ -342,5 +271,4 @@ public class ProfileRootMenuItem : MenuItem
 
         return false;
     }
-    
 }

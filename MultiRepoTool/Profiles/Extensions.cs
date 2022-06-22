@@ -10,7 +10,7 @@ public static class Extensions
         if (profile is null)
             throw new ArgumentNullException(nameof(profile));
 
-        return new ProfileDto
+        return new()
         {
             RepositoriesMode = profile.RepositoriesMode,
             Repositories = profile.Repositories,

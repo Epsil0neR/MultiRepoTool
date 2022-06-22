@@ -73,7 +73,7 @@ public class OpenInGitKraken : MenuItem
                 title.Add(new(b.GetNameWithTrackingInfo(), Constants.ColorBranchLocal));
             }
 
-            yield return new MenuItem(title, () =>
+            yield return new(title, () =>
             {
                 Open(repo);
                 return true;
@@ -166,7 +166,7 @@ public class OpenInGitKraken : MenuItem
         }
         var status = GitStatus.FromString(repository.ActiveBranch?.Status);
         if (status is null)
-            return new MenuItem(rv, func);
+            return new(rv, func);
 
         var p = status.Items.Count(x => x.Path.IsProjectRelatedFile());
         var a = status.Items.Count;
@@ -188,7 +188,7 @@ public class OpenInGitKraken : MenuItem
             rv.Add(new($"All: {a:D2}", ConsoleColor.Red));
         }
 
-        return new MenuItem(rv, func);
+        return new(rv, func);
     }
 
     private MenuItem TitleForDesync(GitRepository repository, Func<bool> func)
@@ -204,7 +204,7 @@ public class OpenInGitKraken : MenuItem
             title.Add(new(b.GetNameWithTrackingInfo(), Constants.ColorBranchLocal));
         }
 
-        return new MenuItem(title, func);
+        return new(title, func);
     }
 
     private void RunSubMenu(IReadOnlyList<GitRepository> repositories, Func<GitRepository, Func<bool>, MenuItem> menuItemResolver)

@@ -29,7 +29,7 @@ public class DisposeDisposablesExtension : UnityContainerExtension, IDisposable
                 if (ContainsReferenceToDisposable(disposable))
                     return;
 
-                _disposableRefs.Add(new WeakReference<IDisposable>(disposable));
+                _disposableRefs.Add(new(disposable));
             }
         }
 

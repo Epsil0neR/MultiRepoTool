@@ -52,13 +52,13 @@ public class GitRepository
         if (directory.GetDirectories().All(x => x.Name != GitConst.GitSubFolder))
             return null;
 
-        return new GitRepository(directory, name);
+        return new(directory, name);
     }
 
     private GitRepository(DirectoryInfo directory, string? name = null)
     {
         Directory = directory;
-        Executor = new CommandExecutor(directory);
+        Executor = new(directory);
 
         Name = string.IsNullOrWhiteSpace(name) ? Directory.Name : name;
         Remotes = GetRemotes().ToList();

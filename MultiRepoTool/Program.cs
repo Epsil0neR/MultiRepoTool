@@ -18,9 +18,9 @@ public struct Constants
     public const ConsoleColor ColorBranchRemote = ConsoleColor.Red;
 }
 
-class Program
+public static class Program
 {
-    static void Main(string[] args)
+    public static void Main(string[] args)
     {
         ConfigureIoC();
 
@@ -96,7 +96,7 @@ class Program
             .Where(x => x is not MenuItems.SeparatorMenuItem)
             .ToList();
         IoC.RegisterInstance("RootMenuItems", rootMenuItems);
-        
+
         //Need to create profile manager as it loads and activates profile.
         var profilesManager = new ProfilesManager(options, repoManager, rootMenuItems);
         IoC.RegisterInstance(profilesManager);
@@ -144,7 +144,7 @@ class Program
 
         if (!options.Menu)
         {
-            menu.Items.OfType<MenuItems.Status>()?.FirstOrDefault()?.Execute(menu);
+            menu.Items.OfType<MenuItems.Status>().FirstOrDefault()?.Execute(menu);
             return true;
         }
 

@@ -61,7 +61,7 @@ public class CleanFolders : MenuItem
 
         void Create(string filter)
         {
-            filters.Add(new CheckableMenuItem<string>(filter, filter) { IsChecked = true });
+            filters.Add(new(filter, filter) { IsChecked = true });
         }
 
         Create("bin");

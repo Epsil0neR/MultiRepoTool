@@ -35,9 +35,10 @@ public static class IoC
     {
         return _container.Resolve(type);
     }
+
     public static TCast Resolve<TCast>(Type t)
     {
-        return (TCast)_container.Resolve(t);
+        return (TCast) _container.Resolve(t);
     }
 
     public static T Resolve<T>(string name)
@@ -74,6 +75,7 @@ public static class IoC
     {
         _container.RegisterInstance(typeof(T), instance);
     }
+
     public static void RegisterInstance(Type type, object instance)
     {
         _container.RegisterInstance(type, instance);
@@ -83,7 +85,7 @@ public static class IoC
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentNullException(nameof(name));
-        
+
         _container.RegisterInstance(typeof(T), name, instance);
     }
 

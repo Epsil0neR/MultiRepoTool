@@ -11,21 +11,11 @@ using MultiRepoTool.Git;
 
 namespace MultiRepoTool.Profiles;
 
-//TODO: [Done] 1. Save profile to file once it created.
-//TODO: [Done] 2. Root menu item should be "Profile". It opens menu with: 1. Select profile. Active: <Profile.Name>. 2+. profile configuration. Last: Go back.
-//TODO: [Done] 3. Menu item to save current profile. Menu item: "Go Back" / "Save". Maybe add menu item "Discard changes"
-//TODO: [Done] 4. List mode toggle - Black list / White list.
-//TODO: [Done] 5. Select repos for list. List should be similar to "Open in GitKraken" menu.
-//TODO: [Done] 6. Select menu items to hide. Like "Pull", "Search", "Status short", etc items from root. NOTE: Some menu items should be always visible. Like "Profile", "Exit"
-//TODO: 7. ??? Add support for different repositories location??? - Just idea for now, check all pros and cons.
-//TODO: [Done] 8. When app starts - check what menu items should be visible.
-//TODO: [Done] 9. Menu items visibility check when profile changes.
-
 public class ProfilesManager : List<Profile>
 {
     private const string DefaultProfileName = "Default";
 
-    private Lazy<JsonSerializerOptions> _jsonOptions = new(() => new JsonSerializerOptions
+    private readonly Lazy<JsonSerializerOptions> _jsonOptions = new(() => new()
     {
         WriteIndented = true,
         Converters =
@@ -37,7 +27,7 @@ public class ProfilesManager : List<Profile>
     private JsonSerializerOptions JsonSerializerOptions => _jsonOptions.Value;
 
     private Profile _current;
-    
+
     public Options Options { get; }
     public GitRepositoriesManager RepositoriesManager { get; }
     public List<MenuItem> RootMenuItems { get; }
@@ -59,8 +49,8 @@ public class ProfilesManager : List<Profile>
     }
 
     public ProfilesManager(
-        Options options, 
-        GitRepositoriesManager repositoriesManager, 
+        Options options,
+        GitRepositoriesManager repositoriesManager,
         List<MenuItem> rootMenuItems)
     {
         Options = options ?? throw new ArgumentNullException(nameof(options));
@@ -79,10 +69,10 @@ public class ProfilesManager : List<Profile>
                 var json = File.ReadAllText(info.FullName, Encoding.UTF8);
                 var data = JsonSerializer.Deserialize<ProfileDto>(json, JsonSerializerOptions);
                 var profile = data?.FromDto(Path.GetFileNameWithoutExtension(info.Name), this, repositoriesManager);
-                
+
                 if (profile is null)
                     continue;
-                
+
                 Add(profile);
 
                 if (DefaultProfileName.Equals(profile.Name, StringComparison.InvariantCultureIgnoreCase))
@@ -92,7 +82,7 @@ public class ProfilesManager : List<Profile>
 
         if (Default is null)
         {
-            Default = new Profile(this)
+            Default = new(this)
             {
                 Name = DefaultProfileName
             };
@@ -147,7 +137,7 @@ public class ProfilesManager : List<Profile>
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentNullException(nameof(name));
-        
+
         // Look for profile with same name.
         if (this.Any(x => string.Equals(x.Name, name, StringComparison.InvariantCultureIgnoreCase)))
             throw new ArgumentException("Profile with same name already exists.", nameof(name));
@@ -168,7 +158,7 @@ public static class ProfileExtensions
     {
         if (profile is null)
             throw new ArgumentNullException(nameof(profile));
-        
+
         var title = new List<ColoredTextPart>
         {
             new(profile.Name)

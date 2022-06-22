@@ -38,7 +38,7 @@ public class SearchFilter
         if (filter.EndsWith(symbol))
             mode |= Mode.After;
 
-        return new SearchFilter(filter.Trim(symbol), mode);
+        return new(filter.Trim(symbol), mode);
     }
 
     public bool Matched(string input)
