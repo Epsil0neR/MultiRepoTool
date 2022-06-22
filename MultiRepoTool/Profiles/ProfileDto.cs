@@ -1,6 +1,6 @@
 ﻿namespace MultiRepoTool.Profiles;
 
-internal class ProfileDto
+public class ProfileDto
 {
     public ListMode RepositoriesMode { get; init; }
     public string[]? Repositories { get; init; }

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using MultiRepoTool.ConsoleMenu;
-using MultiRepoTool.Git;
 
 namespace MultiRepoTool.MenuItems;
 

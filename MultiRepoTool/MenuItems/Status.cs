@@ -3,7 +3,6 @@ using MultiRepoTool.Extensions;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace MultiRepoTool.MenuItems;

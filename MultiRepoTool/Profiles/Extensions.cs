@@ -5,7 +5,7 @@ namespace MultiRepoTool.Profiles;
 
 public static class Extensions
 {
-    internal static ProfileDto ToDto(this Profile profile)
+    public static ProfileDto ToDto(this Profile profile)
     {
         if (profile is null)
             throw new ArgumentNullException(nameof(profile));
@@ -18,7 +18,7 @@ public static class Extensions
         };
     }
 
-    internal static Profile FromDto(
+    public static Profile FromDto(
         this ProfileDto profileDto,
         string name,
         ProfilesManager profilesManager,
@@ -27,7 +27,7 @@ public static class Extensions
         if (profileDto is null)
             throw new ArgumentNullException(nameof(profileDto));
 
-        var rv = new Profile(profilesManager, repositoriesManager)
+        var rv = new Profile(profilesManager)
         {
             Name = name,
             RepositoriesMode = profileDto.RepositoriesMode,

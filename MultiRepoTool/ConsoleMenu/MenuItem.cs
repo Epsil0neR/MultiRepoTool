@@ -9,11 +9,19 @@ public class MenuItem
 {
     public string Title { get; protected set; }
 
-    public IReadOnlyList<ColoredTextPart> ColoredTitle { get; protected set; }
+    public IReadOnlyList<ColoredTextPart> ColoredTitle { get; set; }
 
+    /// <summary>
+    /// Menu item handler that returns if same menu should be shown or closed.
+    /// </summary>
     public Func<Menu, bool> Func { get; protected set; }
 
     public bool HideExecutionText { get; set; }
+    
+    /// <summary>
+    /// Indicates if <see cref="MenuItem"/> is listed.
+    /// </summary>
+    public bool IsHidden { get; set; }
 
     protected MenuItem(string title)
     {

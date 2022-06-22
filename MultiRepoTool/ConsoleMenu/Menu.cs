@@ -44,6 +44,9 @@ public class Menu
             ConsoleUtils.WriteLine(menuText);
             foreach (var item in items)
             {
+                if (item.IsHidden)
+                    continue;
+                
                 PrintMenuItem(item);
             }
 
@@ -53,25 +56,25 @@ public class Menu
             switch (navigation)
             {
                 case MenuNavigation.SelectPrevious:
-                    if (items.All(x => !x.CanExecute))
+                    if (items.All(x => x.IsHidden || !x.CanExecute))
                         break;
 
                     if (Selected == null)
                     {
-                        Selected = items.LastOrDefault(x => x.CanExecute);
+                        Selected = items.LastOrDefault(x => !x.IsHidden && x.CanExecute);
                         break;
                     }
 
                     index = items.IndexOf(Selected);
                     list = items
                         .Take(index)
-                        .Where(x => x.CanExecute)
+                        .Where(x => !x.IsHidden && x.CanExecute)
                         .Reverse()
                         .ToList();
                     if (LoopNavigation)
                         items
                             .Skip(index + 1)
-                            .Where(x => x.CanExecute)
+                            .Where(x => !x.IsHidden && x.CanExecute)
                             .Reverse()
                             .AddTo(list);
 
@@ -87,24 +90,24 @@ public class Menu
 
                     break;
                 case MenuNavigation.SelectNext:
-                    if (items.All(x => !x.CanExecute))
+                    if (items.All(x => x.IsHidden || !x.CanExecute))
                         break;
 
                     if (Selected == null)
                     {
-                        Selected = items.FirstOrDefault(x => x.CanExecute);
+                        Selected = items.FirstOrDefault(x => !x.IsHidden && x.CanExecute);
                         break;
                     }
 
                     index = items.IndexOf(Selected);
                     list = items
                         .Skip(index + 1)
-                        .Where(x => x.CanExecute)
+                        .Where(x => !x.IsHidden && x.CanExecute)
                         .ToList();
                     if (LoopNavigation)
                         items
                             .Take(index)
-                            .Where(x => x.CanExecute)
+                            .Where(x => !x.IsHidden && x.CanExecute)
                             .AddTo(list);
 
                     if (!symbol.HasValue)

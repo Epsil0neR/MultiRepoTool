@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
 using MultiRepoTool.Utils;
@@ -10,7 +9,7 @@ public class Pull : MenuItem
 {
     public GitRepositoriesManager Manager { get; }
 
-    public Pull(GitRepositoriesManager manager) 
+    public Pull(GitRepositoriesManager manager)
         : base("Pull")
     {
         Manager = manager;
@@ -26,6 +25,7 @@ public class Pull : MenuItem
             repository.Pull();
             ConsoleUtils.WriteLine($" {repository.ActiveBranch}", Constants.ColorBranchLocal);
         }
+
         return true;
     }
 }

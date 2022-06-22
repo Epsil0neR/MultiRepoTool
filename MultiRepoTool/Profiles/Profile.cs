@@ -20,16 +20,14 @@ public enum ListMode {
     White    
 }
 
-internal class Profile
+public class Profile
 {
-    private readonly ProfilesManager _manager;
-    private readonly GitRepositoriesManager _repositoriesManager;
-
-    public Profile(ProfilesManager manager, GitRepositoriesManager repositoriesManager)
+    public Profile(ProfilesManager manager)
     {
-        _manager = manager ?? throw new ArgumentNullException(nameof(manager));
-        _repositoriesManager = repositoriesManager;
+        Manager = manager ?? throw new ArgumentNullException(nameof(manager));
     }
+    
+    public ProfilesManager Manager { get; }
 
     public string Name { get; init; }
 
@@ -37,15 +35,21 @@ internal class Profile
     /// Indicates if repositories specified in <see cref="Repositories"/> should be threaten as black list or as white list.
     /// Default: black list. 
     /// </summary>
-    public ListMode RepositoriesMode { get; init; } = ListMode.Black;
+    public ListMode RepositoriesMode { get; set; } = ListMode.Black;
 
-    public string[] Repositories { get; init; } = Array.Empty<string>();
+    public string[] Repositories { get; set; } = Array.Empty<string>();
         
-    public string[] MenuItemsToHide { get; init; } = Array.Empty<string>();
+    public string[] MenuItemsToHide { get; set; } = Array.Empty<string>();
 
     internal void Activate()
     {
-        var result = _repositoriesManager.AllRepositories.ToList();
+        ActivateRepositories();
+        ActivateRootMenu();
+    }
+
+    private void ActivateRepositories()
+    {
+        var result = Manager.RepositoriesManager.AllRepositories.ToList();
         switch (RepositoriesMode)
         {
             case ListMode.White:
@@ -61,6 +65,19 @@ internal class Profile
 
         IoC.RegisterInstance<IEnumerable<GitRepository>>(result);
         IoC.RegisterInstance<IReadOnlyList<GitRepository>>(result);
-        _repositoriesManager.Repositories = result;
+        Manager.RepositoriesManager.Repositories = result;
+    }
+
+    private void ActivateRootMenu()
+    {
+        var menuItemsToHide = MenuItemsToHide;
+        foreach (var item in Manager.RootMenuItems) 
+            item.IsHidden = menuItemsToHide?.Contains(item.Title, StringComparer.InvariantCultureIgnoreCase) ?? false;
+    }
+
+    public void ApplyChangesAndSave()
+    {
+        Manager.Save(this);
+        Activate();
     }
 }

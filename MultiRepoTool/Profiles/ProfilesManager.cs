@@ -5,30 +5,42 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
+using System.Threading;
 using MultiRepoTool.ConsoleMenu;
 using MultiRepoTool.Git;
-using MultiRepoTool.MenuItems;
-using MultiRepoTool.Utils;
 
 namespace MultiRepoTool.Profiles;
 
 //TODO: [Done] 1. Save profile to file once it created.
-//TODO: 2. Root menu item should be "Profile". It opens menu with: 1. Select profile. Active: <Profile.Name>. 2+. profile configuration. Last: Go back.
-//TODO: 3. Menu item to save current profile. Menu item: "Go Back" / "Save". Maybe add menu item "Discard changes"
+//TODO: [Done] 2. Root menu item should be "Profile". It opens menu with: 1. Select profile. Active: <Profile.Name>. 2+. profile configuration. Last: Go back.
+//TODO: [Done] 3. Menu item to save current profile. Menu item: "Go Back" / "Save". Maybe add menu item "Discard changes"
 //TODO: [Done] 4. List mode toggle - Black list / White list.
-//TODO: 5. Select repos for list. List should be similar to "Open in GitKraken" menu.
-//TODO: 6. Select menu items to hide. Like "Pull", "Search", "Status short", etc items from root. NOTE: Some menu items should be always visible. Like "Profile", "Exit"
+//TODO: [Done] 5. Select repos for list. List should be similar to "Open in GitKraken" menu.
+//TODO: [Done] 6. Select menu items to hide. Like "Pull", "Search", "Status short", etc items from root. NOTE: Some menu items should be always visible. Like "Profile", "Exit"
 //TODO: 7. ??? Add support for different repositories location??? - Just idea for now, check all pros and cons.
+//TODO: [Done] 8. When app starts - check what menu items should be visible.
+//TODO: [Done] 9. Menu items visibility check when profile changes.
 
-internal class ProfilesManager : List<Profile>
+public class ProfilesManager : List<Profile>
 {
-    private readonly GitRepositoriesManager _repositoriesManager;
-    internal const string DefaultProfileName = "Default";
-    
+    private const string DefaultProfileName = "Default";
+
+    private Lazy<JsonSerializerOptions> _jsonOptions = new(() => new JsonSerializerOptions
+    {
+        WriteIndented = true,
+        Converters =
+        {
+            new JsonStringEnumConverter()
+        }
+    }, LazyThreadSafetyMode.ExecutionAndPublication);
+
+    private JsonSerializerOptions JsonSerializerOptions => _jsonOptions.Value;
+
     private Profile _current;
     
     public Options Options { get; }
+    public GitRepositoriesManager RepositoriesManager { get; }
+    public List<MenuItem> RootMenuItems { get; }
 
     public Profile Default { get; }
 
@@ -46,10 +58,14 @@ internal class ProfilesManager : List<Profile>
         }
     }
 
-    public ProfilesManager(Options options, GitRepositoriesManager repositoriesManager)
+    public ProfilesManager(
+        Options options, 
+        GitRepositoriesManager repositoriesManager, 
+        List<MenuItem> rootMenuItems)
     {
-        Options = options;
-        _repositoriesManager = repositoriesManager;
+        Options = options ?? throw new ArgumentNullException(nameof(options));
+        RepositoriesManager = repositoriesManager ?? throw new ArgumentNullException(nameof(repositoriesManager));
+        RootMenuItems = rootMenuItems ?? throw new ArgumentNullException(nameof(rootMenuItems));
 
         var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
         var directory = Path.Combine(rootDirectory, options.UserProfilesFolder);
@@ -61,7 +77,7 @@ internal class ProfilesManager : List<Profile>
             {
                 var info = new FileInfo(file);
                 var json = File.ReadAllText(info.FullName, Encoding.UTF8);
-                var data = JsonSerializer.Deserialize<ProfileDto>(json);
+                var data = JsonSerializer.Deserialize<ProfileDto>(json, JsonSerializerOptions);
                 var profile = data?.FromDto(Path.GetFileNameWithoutExtension(info.Name), this, repositoriesManager);
                 
                 if (profile is null)
@@ -76,7 +92,7 @@ internal class ProfilesManager : List<Profile>
 
         if (Default is null)
         {
-            Default = new Profile(this, repositoriesManager)
+            Default = new Profile(this)
             {
                 Name = DefaultProfileName
             };
@@ -98,15 +114,7 @@ internal class ProfilesManager : List<Profile>
             name = DefaultProfileName;
 
         var dto = profile.ToDto();
-        var options = new JsonSerializerOptions
-        {
-            WriteIndented = true,
-            Converters =
-            {
-                new JsonStringEnumConverter()
-            }
-        };
-        var json = JsonSerializer.Serialize(dto, options);
+        var json = JsonSerializer.Serialize(dto, JsonSerializerOptions);
         var rootDirectory = AppDomain.CurrentDomain.BaseDirectory;
         var directory = Path.Combine(rootDirectory, Options.UserProfilesFolder);
         var path = Path.Combine(directory, $"{name}.profile");
@@ -135,85 +143,42 @@ internal class ProfilesManager : List<Profile>
         return false;
     }
 
-    public MenuItem CreateMenuItem()
+    public Profile Create(string name)
     {
-        return new MenuItem("Profiles", RootMenuHandler);
-    }
-
-    private bool RootMenuHandler()
-    {
-        var menus = new List<MenuItem>()
-        {
-            ToMenuItem(Default),
-        };
-
-        if (Count > 1)
-        {
-            menus.Add(new SeparatorMenuItem());
-
-            foreach (var profile in this)
-            {
-                if (ReferenceEquals(profile, Default))
-                    continue;
-
-                menus.Add(ToMenuItem(profile));
-            }
-        }
-
-        menus.Add(new SeparatorMenuItem());
-        menus.Add(new MenuItem("Create new profile...", CreateProfileHandler));
-        menus.Add(new MenuItem("Cancel", () => false));
-
-        var menu = new Menu(menus)
-        {
-            PreventNewLineOnExecution = true,
-            LoopNavigation = true
-        };
-
-        menu.Run();
-        return true;
-    }
-
-    private bool CreateProfileHandler()
-    {
-        ConsoleUtils.Write("Profile name: ");
-        var name = ConsoleUtils.ReadLine(ConsoleColor.Red);
-
-        if (string.IsNullOrEmpty(name))
-        {
-            ConsoleUtils.WriteLine("Profile name cannot be empty.");
-            return true;
-        }
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentNullException(nameof(name));
         
-        var duplicate = this.Any(x => string.Equals(name, x.Name, StringComparison.InvariantCultureIgnoreCase));
-        if (duplicate)
-        {
-            ConsoleUtils.WriteLine("Profile with same name already exists.");
-            return true;
-        }
+        // Look for profile with same name.
+        if (this.Any(x => string.Equals(x.Name, name, StringComparison.InvariantCultureIgnoreCase)))
+            throw new ArgumentException("Profile with same name already exists.", nameof(name));
 
-        var rv = new Profile(this, _repositoriesManager)
+        var rv = new Profile(this)
         {
             Name = name
         };
         Add(rv);
         Save(rv);
-        Current = rv;
-        return false;
+        return rv;
     }
+}
 
-    private MenuItem ToMenuItem(Profile profile)
+public static class ProfileExtensions
+{
+    public static MenuItem ToMenuItem(this Profile profile)
     {
+        if (profile is null)
+            throw new ArgumentNullException(nameof(profile));
+        
         var title = new List<ColoredTextPart>
         {
             new(profile.Name)
         };
-        if (ReferenceEquals(profile, Current))
+        if (ReferenceEquals(profile, profile.Manager.Current))
             title.Add(new(" (active)", Constants.ColorRepository));
 
         return new(title, () =>
         {
-            Current = profile;
+            profile.Manager.Current = profile;
             return false;
         });
     }

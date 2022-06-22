@@ -57,6 +57,9 @@ class Program
             return;
         }
 
+        Console.BackgroundColor = ConsoleColor.Black;
+        Console.ForegroundColor = ConsoleColor.White;
+
         SetTitle(di.FullName);
 
         ConsoleUtils.Write("Directory with repositories: ");
@@ -72,11 +75,6 @@ class Program
         var repoManager = new GitRepositoriesManager(repositories);
         IoC.RegisterInstance(repoManager);
 
-        //Need to create profile manager as it loads and activates profile.
-        var profilesManager = new ProfilesManager(options, repoManager);
-        IoC.RegisterInstance(profilesManager);
-
-        var custom = IoC.Resolve<UserItems>();
         var menuItems = new List<MenuItem>
             {
                 IoC.Resolve<MenuItems.Reload>(),
@@ -94,13 +92,23 @@ class Program
             .Where(x => x is not null)
             .ToList();
 
+        var rootMenuItems = menuItems
+            .Where(x => x is not MenuItems.SeparatorMenuItem)
+            .ToList();
+        IoC.RegisterInstance("RootMenuItems", rootMenuItems);
+        
+        //Need to create profile manager as it loads and activates profile.
+        var profilesManager = new ProfilesManager(options, repoManager, rootMenuItems);
+        IoC.RegisterInstance(profilesManager);
+
+        var custom = IoC.Resolve<UserItems>();
         if (custom.MenuItems.Count > 0)
         {
             menuItems.AddRange(custom.MenuItems);
             menuItems.Add(IoC.Resolve<MenuItems.SeparatorMenuItem>());
         }
 
-        menuItems.Add(profilesManager.CreateMenuItem());
+        menuItems.Add(IoC.Resolve<MenuItems.ProfileRootMenuItem>());
         menuItems.Add(IoC.Resolve<MenuItems.ClearConsole>());
         menuItems.Add(IoC.Resolve<MenuItems.Exit>());
 
